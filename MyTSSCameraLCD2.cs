@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.IO;
 using System.Runtime.InteropServices;
 using avaness.CameraLCDRevived.Wrappers;
 using Sandbox.Game.Components;
@@ -6,26 +8,32 @@ using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.GameSystems;
 using Sandbox.Game.GameSystems.TextSurfaceScripts;
+using Sandbox.Game.World;
 using Sandbox.ModAPI;
+using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using VRage.Game;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI;
+using VRage.Game.Utils;
 using VRage.ModAPI;
 using VRage.Render.Image;
+using VRage.Render.Scene;
 using VRage.Utils;
 using VRageMath;
 using VRageRender;
+using VRageRender.Messages;
 
 namespace avaness.CameraLCDRevived
 {
     [MyTextSurfaceScript("TSS_CameraDisplay", "Camera Display Test")]
     public class MyTSSCameraLCD2 : MyTSSCommon
     {
-        public IMyTerminalBlock Camera { get; private set; }
+        public MyCameraBlock Camera { get; private set; }
 
         public override ScriptUpdate NeedsUpdate => ScriptUpdate.Update10; // frequency that Run() is called.
 
+        private readonly ConcurrentQueue<byte[]> queue = new ConcurrentQueue<byte[]>();
         private readonly MyTextPanelComponent panelComponent;
         private readonly MyRenderComponentScreenAreas renderComp;
         private readonly IMyTerminalBlock terminalBlock;
@@ -71,7 +79,7 @@ namespace avaness.CameraLCDRevived
             }
             foreach(var b in terminal.Blocks)
             {
-                if (b is IMyCameraBlock cameraBlock && b.CustomName.ToString() == text)
+                if (b is MyCameraBlock cameraBlock && b.CustomName.ToString() == text)
                 {
                     Camera = cameraBlock;
                     CameraLCD.AddDisplay(id, this);
@@ -155,25 +163,132 @@ namespace avaness.CameraLCDRevived
 
         public void OnDrawScene()
         {
-            if (Camera == null)
+            if (!TryGetTextureName(out string textureName) && Camera != null)
                 return;
 
-            var texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", (int)panelComponent.TextureSize.X, (int)panelComponent.TextureSize.Y, Format.B8G8R8A8_UNorm);
+            MyCamera camera = MySector.MainCamera;
+            if (camera == null)
+                return;
+
+            MatrixD viewMatrix = GetViewMatrix();
+            Matrix projMatrix = new Matrix(camera.ProjectionMatrix)
+            {
+                Forward = Vector3.Zero
+            };
+
+            SetCameraViewMatrix(viewMatrix, projMatrix, camera.ProjectionMatrixFar, camera.FovWithZoom, camera.FovWithZoom, camera.NearPlaneDistance, camera.FarPlaneDistance, camera.FarFarPlaneDistance, Camera.WorldMatrix.Translation, smooth: false);
+            BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", (int)panelComponent.TextureSize.X, (int)panelComponent.TextureSize.Y, Format.R8G8B8A8_UNorm_SRgb);
             MyRender11.DrawGameScene(texture, out _);
-            Draw(MyTextureData.ToData(texture, null, MyImage.FileFormat.Bmp));
+            DrawCharacterHead();
+
+
+            //MyTextureData.ToFile(texture, @"C:\Users\austi\Desktop\test.png", MyImage.FileFormat.Png);
+            byte[] data = texture.GetData();//MyTextureData.ToData(texture, null, MyImage.FileFormat.Bmp);
+            int requiredSize = panelComponent.TextureByteCount;
+            if(data.Length < requiredSize)
+                Array.Resize(ref data, requiredSize);
+            Draw(textureName, data);
+
             texture.Release();
+
+            SetCameraViewMatrix(camera.ViewMatrix, camera.ProjectionMatrix, camera.ProjectionMatrixFar, camera.FovWithZoom, camera.FovWithZoom, camera.NearPlaneDistance, camera.FarPlaneDistance, camera.FarFarPlaneDistance, camera.Position, lastMomentUpdateIndex: 0, smooth: false);
+            
         }
 
-        public void Draw(byte[] videoData)
+        private void DrawCharacterHead()
         {
+            if (CameraLCD.Settings.HeadFix && MySession.Static != null && MySession.Static.LocalCharacter != null && MySession.Static.LocalCharacter.Render != null && MySession.Static.LocalCharacter.IsInFirstPersonView)
+            {
+                uint myChar = MySession.Static.LocalCharacter.Render.RenderObjectIDs[0];
+                if (myChar > 0)
+                {
+                    foreach (string mat in MySession.Static.LocalCharacter.Definition.MaterialsDisabledIn1st)
+                    {
+                        MyScene11.AddMaterialRenderFlagChange(myChar, new MyEntityMaterialKey(mat),
+                            new RenderFlagsChange() { Add = RenderFlags.Visible, Remove = 0 });
+                    }
+                }
+
+            }
+        }
+
+        private MatrixD GetViewMatrix()
+        {
+
+            return Camera.GetViewMatrix();
+            /*
+            var position = Camera.PositionComp;
+            MatrixD orientation = position.GetOrientation();
+            Vector3D pos = position.GetPosition();
+            Vector3D up = orientation.Up;
+            Vector3D target = pos + orientation.Forward;
+            return MatrixD.CreateLookAt(pos, target, up);
+            */
+        }
+
+        private void SetCameraViewMatrix(MatrixD viewMatrix, Matrix projectionMatrix, Matrix projectionFarMatrix, float fov, float fovSkybox, float nearPlane, float farPlane, float farFarPlane, Vector3D cameraPosition, float projectionOffsetX = 0f, float projectionOffsetY = 0f, int lastMomentUpdateIndex = 1, bool smooth = true)
+        {
+            MyRenderMessageSetCameraViewMatrix renderMessage = MyRenderProxy.MessagePool.Get<MyRenderMessageSetCameraViewMatrix>(MyRenderMessageEnum.SetCameraViewMatrix);
+            renderMessage.ViewMatrix = viewMatrix;
+            renderMessage.ProjectionMatrix = projectionMatrix;
+            renderMessage.ProjectionFarMatrix = projectionFarMatrix;
+            renderMessage.FOV = fov;
+            renderMessage.FOVForSkybox = fovSkybox;
+            renderMessage.NearPlane = nearPlane;
+            renderMessage.FarPlane = farPlane;
+            renderMessage.FarFarPlane = farFarPlane;
+            renderMessage.CameraPosition = cameraPosition;
+            renderMessage.LastMomentUpdateIndex = lastMomentUpdateIndex;
+            renderMessage.ProjectionOffsetX = projectionOffsetX;
+            renderMessage.ProjectionOffsetY = projectionOffsetY;
+            renderMessage.Smooth = smooth;
+            MyRender11.SetupCameraMatrices(renderMessage);
+        }
+
+        private bool TryGetTextureName(out string name)
+        {
+            try
+            {
+                name = panelComponent.GetRenderTextureName();
+                return true;
+            }
+            catch (NullReferenceException)
+            {
+                name = null;
+                return false;
+            }
+        }
+
+        public void Draw(string textureName, byte[] videoData)
+        {
+
+            MyManagers.FileTextures.ResetGeneratedTexture(textureName, videoData);//GetBGRValues(videoData));
+            //MyRenderProxy.ResetGeneratedTexture(textureName, videoData);
+
             //Marshal.Copy(e.BufferHandle, videoData, 0, e.Width * e.Height * 4);
             /*if (videoData.Length < 1024 * 1024 * 4)
                 Array.Resize(ref videoData, 1024 * 1024 * 4);*/
 
-            MyRenderProxy.ResetGeneratedTexture(panelComponent.GetRenderTextureName(), videoData);
 
             //e.Handled = true;
             //_browser.GetBrowserHost().Invalidate(PaintElementType.View);
+        }
+
+        private byte[] GetBGRValues(byte[] data)
+        {
+            var bmp = new System.Drawing.Bitmap(new MemoryStream(data));
+            System.Drawing.Rectangle rect = new System.Drawing.Rectangle(0, 0, bmp.Width, bmp.Height);
+            bmp = bmp.Clone(rect, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            System.Drawing.Imaging.BitmapData bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+            bmpData.Stride = -bmpData.Stride;
+
+            int rowBytes = bmpData.Width * System.Drawing.Image.GetPixelFormatSize(bmp.PixelFormat) / 8;
+            int imgBytes = bmp.Height * rowBytes;
+
+            IntPtr ptr = bmpData.Scan0;
+            Marshal.Copy(ptr, data, 0, imgBytes);
+            bmp.UnlockBits(bmpData);
+            return data;
         }
     }
 }

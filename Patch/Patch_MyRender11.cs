@@ -79,10 +79,10 @@ namespace avaness.CameraLCDRevived.Patch
         public static Stopwatch sw = new Stopwatch();
         public static bool Prefix_DrawScene()
         {
-            CameraLCD.OnDrawScene();
-            return true;
+            return !CameraLCD.OnDrawScene();
 
-            /*CameraLCD.renderedFrame = false;
+            /*
+            CameraLCD.renderedFrame = false;
             if (!CameraLCD.IsRenderFrame())
             {
                 return true;
@@ -186,7 +186,7 @@ namespace avaness.CameraLCDRevived.Patch
                         viewMatrix = turretBase.GetViewMatrix();
                     }
                     float oldFov = camera.Zoom.GetFOV();
-                    float newFov = (float)Math.Max(0.01, Math.Min(display.fov > 0 ? Math.PI / 180 * display.fov : oldFov, 3.14159174101256));
+                    float newFov = (float)Math.Max(0.01, Math.Min(display.fov > 0 ? Math.PI / 180 * display.fov : oldFov, Math.PI));
 
                     MyRenderMessageSetCameraViewMatrix vm = GetCameraViewMatrix(viewMatrix, projMatrix, camera.ProjectionMatrixFar, newFov, newFov, camera.NearPlaneDistance, camera.FarPlaneDistance, camera.FarFarPlaneDistance, pos, 0f, 0f, 1);
                     CameraLCD.log.Log(string.Concat(new object[]

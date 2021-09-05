@@ -85,12 +85,10 @@
     <Compile Include="CameraLCD.cs" />
     <Compile Include="CameraLCDSettings.cs" />
     <Compile Include="DisplayId.cs" />
-    <Compile Include="Display.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="MyGuiScreenPluginConfig.cs" />
     <Compile Include="MyTSSCameraLCD2.cs" />
     <Compile Include="MyTSSCameraLCD.cs" />
-    <Compile Include="Patch\Patch_CreateRGBA.cs" />
     <Compile Include="Patch\Patch_FillStreams.cs" />
     <Compile Include="Patch\Patch_HighlightsRun.cs" />
     <Compile Include="Patch\Patch_LoadScripts.cs" />
@@ -99,6 +97,7 @@
     <Compile Include="Patch\Patch_UpdateLODs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Wrappers\MyBorrowedRwTextureManager.cs" />
+    <Compile Include="Wrappers\MyFileTextureManager.cs" />
     <Compile Include="Wrappers\MyGeneratedTextureManager.cs" />
     <Compile Include="Wrappers\MyGeometryRenderer.cs" />
     <Compile Include="Wrappers\MyManagers.cs" />

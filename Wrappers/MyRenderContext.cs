@@ -1,43 +1,48 @@
-﻿using SharpDX.Mathematics.Interop;
+﻿using HarmonyLib;
+using SharpDX;
+using SharpDX.Direct3D11;
 using System;
 using System.Reflection;
 
 namespace avaness.CameraLCDRevived.Wrappers
 {
-    /*public class MyRenderContext
+    public class MyRenderContext
     {
-        object instance;
-        private static bool init;
-        private static MethodInfo mResetTargets;
-        private static MethodInfo mClearRtv;
-        private static MethodInfo mClearState;
+        private readonly object instance;
+
+        static MyRenderContext()
+        {
+            Type t = AccessTools.TypeByName("VRage.Render11.RenderContext.MyRenderContext");
+            Type tIResource = AccessTools.TypeByName("VRage.Render11.Resources.IResource");
+            copyResource = AccessTools.Method(t, "CopyResource", new Type[] { tIResource, typeof(Resource) });
+            mapSubresource = AccessTools.Method(t, "MapSubresource", new Type[] { typeof(Texture2D), typeof(int), typeof(int), typeof(MapMode), typeof(MapFlags), typeof(DataStream).MakeByRefType() });
+            unmapSubresource = AccessTools.Method(t, "UnmapSubresource", new Type[] { typeof(Resource), typeof(int) });
+        }
 
         public MyRenderContext(object instance)
         {
             this.instance = instance;
-            if(!init)
-            {
-                Type t = instance.GetType();
-                mResetTargets = t.GetMethod("ResetTargets", BindingFlags.NonPublic | BindingFlags.Instance);
-                mClearRtv = t.GetMethod("ClearRtv", BindingFlags.NonPublic | BindingFlags.Instance);
-                mClearState = t.GetMethod("ClearState", BindingFlags.NonPublic | BindingFlags.Instance);
-                init = true;
-            }
         }
 
-        public void ClearState()
+        private static readonly MethodInfo copyResource;
+        public void CopyResource(object source, Resource destination)
         {
-            mClearState.Invoke(instance, new object[0]);
+            copyResource.Invoke(instance, new object[] { source, destination });
+        }
+        
+        private static readonly MethodInfo mapSubresource;
+        public DataBox MapSubresource(Texture2D resource, int mipSlice, int arraySlice, MapMode mode, MapFlags flags, out DataStream stream)
+        {
+            var args = new object[] { resource, mipSlice, arraySlice, mode, flags, null };
+            var result = (DataBox)mapSubresource.Invoke(instance, args);
+            stream = (DataStream)args[5];
+            return result;
         }
 
-        public void ResetTargets()
+        private static readonly MethodInfo unmapSubresource;
+        public void UnmapSubresource(Resource resourceRef, int subresource)
         {
-            mResetTargets.Invoke(instance, new object[0]);
+            unmapSubresource.Invoke(instance, new object[] { resourceRef, subresource });
         }
-
-        public void ClearRtv(object rtv, RawColor4 colorRGBA)
-        {
-            mClearRtv.Invoke(instance, new object[] { rtv, colorRGBA });
-        }
-    }*/
+    }
 }

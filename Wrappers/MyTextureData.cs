@@ -1,5 +1,8 @@
 ﻿using HarmonyLib;
+using SharpDX.Direct3D11;
+using SharpDX.DXGI;
 using System;
+using System.IO;
 using System.Reflection;
 using VRage.Render.Image;
 

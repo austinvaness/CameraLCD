@@ -97,14 +97,21 @@ namespace avaness.CameraLCDRevived
             //Patch_UpdateProxiesObjectData.Patch(harmony);
         }
 
-        public static void OnDrawScene()
+        /// <summary>
+        /// Returns true if a camera was drawn.
+        /// </summary>
+        public static bool OnDrawScene()
         {
+            renderCount++;
             if (IsRenderFrame() && HasNextDisplay())
             {
-                if (displayIndex > displays.Count)
+                if (displayIndex >= displays.Count)
                     displayIndex = 0;
-                displays.Values.First().OnDrawScene();
+                displays.Values.Skip(displayIndex).First().OnDrawScene();
+                displayIndex++;
+                return true;
             }
+            return false;
         }
 
         public void Update()
