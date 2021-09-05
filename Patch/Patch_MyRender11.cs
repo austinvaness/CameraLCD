@@ -15,10 +15,10 @@ using VRage.Render.Scene;
 using VRageMath;
 using VRageRender;
 using VRageRender.Messages;
-using avaness.CameraLCDRevived.Wrappers;
+using avaness.CameraLCD.Wrappers;
 using VRage.Render.Image;
 
-namespace avaness.CameraLCDRevived.Patch
+namespace avaness.CameraLCD.Patch
 {
     public static class Patch_MyRender11
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace avaness.CameraLCDRevived
+namespace avaness.CameraLCD
 {
     public struct DisplayId : IEquatable<DisplayId>
     {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using VRageRender;
 using VRageRender.Messages;
 
-namespace avaness.CameraLCDRevived.Wrappers
+namespace avaness.CameraLCD.Wrappers
 {
     public static class MyRender11
     {

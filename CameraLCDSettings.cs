@@ -1,4 +1,4 @@
-﻿namespace avaness.CameraLCDRevived
+﻿namespace avaness.CameraLCD
 {
     public class CameraLCDSettings
     {

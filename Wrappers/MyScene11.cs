@@ -4,7 +4,7 @@ using System.Reflection;
 using VRage.Render.Scene;
 using VRageRender;
 
-namespace avaness.CameraLCDRevived.Wrappers
+namespace avaness.CameraLCD.Wrappers
 {
     public class MyScene11
     {

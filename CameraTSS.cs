@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
-using avaness.CameraLCDRevived.Wrappers;
+using avaness.CameraLCD.Wrappers;
 using Sandbox.Game.Components;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
@@ -24,24 +24,21 @@ using VRageMath;
 using VRageRender;
 using VRageRender.Messages;
 
-namespace avaness.CameraLCDRevived
+namespace avaness.CameraLCD
 {
-    [MyTextSurfaceScript("TSS_CameraDisplay", "Camera Display Test")]
-    public class MyTSSCameraLCD2 : MyTSSCommon
+    [MyTextSurfaceScript("TSS_CameraDisplay", "Camera Display")]
+    public class CameraTSS : MyTSSCommon
     {
         public MyCameraBlock Camera { get; private set; }
 
-        public override ScriptUpdate NeedsUpdate => ScriptUpdate.Update10; // frequency that Run() is called.
+        public override ScriptUpdate NeedsUpdate => ScriptUpdate.Update100;
 
-        private readonly ConcurrentQueue<byte[]> queue = new ConcurrentQueue<byte[]>();
         private readonly MyTextPanelComponent panelComponent;
-        private readonly MyRenderComponentScreenAreas renderComp;
         private readonly IMyTerminalBlock terminalBlock;
         private bool needsTerminal;
-        private bool taken;
         private DisplayId id;
 
-        public MyTSSCameraLCD2(IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
+        public CameraTSS(IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
             panelComponent = (MyTextPanelComponent)surface;
             terminalBlock = (IMyTerminalBlock)block;
@@ -77,113 +74,46 @@ namespace avaness.CameraLCDRevived
                 Camera = null;
                 return;
             }
+
             foreach(var b in terminal.Blocks)
             {
                 if (b is MyCameraBlock cameraBlock && b.CustomName.ToString() == text)
                 {
                     Camera = cameraBlock;
                     CameraLCD.AddDisplay(id, this);
-                    break;
+                    return;
                 }
             }
-            taken = false;
+
+            needsTerminal = true;
         }
 
         public override void Run()
         {
-            try
-            {
-                base.Run(); // do not remove
-                if (needsTerminal)
-                    TerminalBlock_CustomDataChanged(terminalBlock);
-                Draw();
-            }
-            catch (Exception e) // no reason to crash the entire game just for an LCD script, but do NOT ignore them either, nag user so they report it :}
-            {
-                DrawError(e);
-            }
+            base.Run(); // do not remove
+            if (needsTerminal)
+                TerminalBlock_CustomDataChanged(terminalBlock);
         }
 
-        void Draw()
-        {
-            /*
-            Vector2 screenSize = Surface.SurfaceSize;
-            Vector2 screenCorner = (Surface.TextureSize - screenSize) * 0.5f;
-
-            var frame = Surface.DrawFrame();
-
-            // Drawing sprites works exactly like in PB API.
-            // Therefore this guide applies: https://github.com/malware-dev/MDK-SE/wiki/Text-Panels-and-Drawing-Sprites
-
-            // there are also some helper methods from the MyTSSCommon that this extends.
-            // like: AddBackground(frame, Surface.ScriptBackgroundColor); - a grid-textured background
-
-            // the colors in the terminal are Surface.ScriptBackgroundColor and Surface.ScriptForegroundColor, the other ones without Script in name are for text/image mode.
-            string camera = "null";
-            if (Camera != null)
-                camera = Camera.GetType().ToString();
-            var text = MySprite.CreateText(terminalBlock.CustomData + " " + needsTerminal + " " + camera, "Monospace", Surface.ScriptForegroundColor, 0.3f, TextAlignment.LEFT);
-            text.Position = screenCorner + new Vector2(16, 16); // 16px from topleft corner of the visible surface
-            frame.Add(text);
-
-            // add more sprites and stuff
-
-            frame.Dispose(); // send sprites to the screen
-            */
-        }
-
-        void DrawError(Exception e)
-        {
-            MyLog.Default.WriteLineAndConsole($"{e.Message}\n{e.StackTrace}");
-
-            try // first try printing the error on the LCD
-            {
-                Vector2 screenSize = Surface.SurfaceSize;
-                Vector2 screenCorner = (Surface.TextureSize - screenSize) * 0.5f;
-
-                var frame = Surface.DrawFrame();
-
-                var bg = new MySprite(SpriteType.TEXTURE, "SquareSimple", null, null, Color.Black);
-                frame.Add(bg);
-
-                var text = MySprite.CreateText($"ERROR: {e.Message}\n{e.StackTrace}\n\nPlease send screenshot of this to mod author.\n{MyAPIGateway.Utilities.GamePaths.ModScopeName}", "White", Color.Red, 0.7f, TextAlignment.LEFT);
-                text.Position = screenCorner + new Vector2(16, 16);
-                frame.Add(text);
-
-                frame.Dispose();
-            }
-            catch (Exception e2)
-            {
-                MyLog.Default.WriteLineAndConsole($"Also failed to draw error on screen: {e2.Message}\n{e2.StackTrace}");
-
-                if (MyAPIGateway.Session?.Player != null)
-                    MyAPIGateway.Utilities.ShowNotification($"[ ERROR: {GetType().FullName}: {e.Message} | Send SpaceEngineers.Log to mod author ]", 10000, MyFontEnum.Red);
-            }
-        }
-
+        /// <summary>
+        /// This is the only method where calls to render can be made directly.
+        /// </summary>
         public void OnDrawScene()
         {
             if (!TryGetTextureName(out string textureName) && Camera != null)
                 return;
 
-            MyCamera camera = MySector.MainCamera;
-            if (camera == null)
+            MyCamera renderCamera = MySector.MainCamera;
+            if (renderCamera == null)
                 return;
 
             MatrixD viewMatrix = GetViewMatrix();
-            Matrix projMatrix = new Matrix(camera.ProjectionMatrix)
-            {
-                Forward = Vector3.Zero
-            };
 
-            SetCameraViewMatrix(viewMatrix, projMatrix, camera.ProjectionMatrixFar, camera.FovWithZoom, camera.FovWithZoom, camera.NearPlaneDistance, camera.FarPlaneDistance, camera.FarFarPlaneDistance, Camera.WorldMatrix.Translation, smooth: false);
-            BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", (int)panelComponent.TextureSize.X, (int)panelComponent.TextureSize.Y, Format.R8G8B8A8_UNorm_SRgb);
-            MyRender11.DrawGameScene(texture, out _);
-            DrawCharacterHead();
+            SetCameraViewMatrix(viewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, Camera.WorldMatrix.Translation, smooth: false);
 
+            BorrowedRtvTexture texture = DrawGame();
 
-            //MyTextureData.ToFile(texture, @"C:\Users\austi\Desktop\test.png", MyImage.FileFormat.Png);
-            byte[] data = texture.GetData();//MyTextureData.ToData(texture, null, MyImage.FileFormat.Bmp);
+            byte[] data = texture.GetData();
             int requiredSize = panelComponent.TextureByteCount;
             if(data.Length < requiredSize)
                 Array.Resize(ref data, requiredSize);
@@ -191,8 +121,17 @@ namespace avaness.CameraLCDRevived
 
             texture.Release();
 
-            SetCameraViewMatrix(camera.ViewMatrix, camera.ProjectionMatrix, camera.ProjectionMatrixFar, camera.FovWithZoom, camera.FovWithZoom, camera.NearPlaneDistance, camera.FarPlaneDistance, camera.FarFarPlaneDistance, camera.Position, lastMomentUpdateIndex: 0, smooth: false);
+            SetCameraViewMatrix(renderCamera.ViewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, renderCamera.Position, lastMomentUpdateIndex: 0, smooth: false);
             
+        }
+
+        private BorrowedRtvTexture DrawGame()
+        {
+            BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", (int)panelComponent.TextureSize.X, (int)panelComponent.TextureSize.Y, Format.R8G8B8A8_UNorm_SRgb);
+            MyRender11.DrawGameScene(texture, out _);
+            DrawCharacterHead();
+
+            return texture;
         }
 
         private void DrawCharacterHead()

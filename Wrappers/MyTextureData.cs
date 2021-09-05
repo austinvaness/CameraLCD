@@ -6,7 +6,7 @@ using System.IO;
 using System.Reflection;
 using VRage.Render.Image;
 
-namespace avaness.CameraLCDRevived.Wrappers
+namespace avaness.CameraLCD.Wrappers
 {
     public class MyTextureData
     {

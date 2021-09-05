@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31005.135
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraLCDRevived", "CameraLCDRevived.csproj", "{E1EE5492-48BE-48EF-A33A-FE12286AC1A8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraLCD", "CameraLCD.csproj", "{E1EE5492-48BE-48EF-A33A-FE12286AC1A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

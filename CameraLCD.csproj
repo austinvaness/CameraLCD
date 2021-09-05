@@ -7,8 +7,8 @@
     <ProjectGuid>{E1EE5492-48BE-48EF-A33A-FE12286AC1A8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>avaness.CameraLCDRevived</RootNamespace>
-    <AssemblyName>CameraLCDRevived</AssemblyName>
+    <RootNamespace>avaness.CameraLCD</RootNamespace>
+    <AssemblyName>CameraLCD</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>.\0Harmony.dll</HintPath>
+    <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Lib.Harmony.2.1.1\lib\net45\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Sandbox.Common">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Common.dll</HintPath>
@@ -85,14 +85,9 @@
     <Compile Include="CameraLCD.cs" />
     <Compile Include="CameraLCDSettings.cs" />
     <Compile Include="DisplayId.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="MyGuiScreenPluginConfig.cs" />
-    <Compile Include="MyTSSCameraLCD2.cs" />
-    <Compile Include="MyTSSCameraLCD.cs" />
-    <Compile Include="Patch\Patch_FillStreams.cs" />
-    <Compile Include="Patch\Patch_HighlightsRun.cs" />
+    <Compile Include="Gui\MyGuiScreenPluginConfig.cs" />
+    <Compile Include="CameraTSS.cs" />
     <Compile Include="Patch\Patch_LoadScripts.cs" />
-    <Compile Include="Patch\Patch_MyBorrowedRwTextureManager.cs" />
     <Compile Include="Patch\Patch_MyRender11.cs" />
     <Compile Include="Patch\Patch_UpdateLODs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -107,6 +102,9 @@
     <Compile Include="Wrappers\MyScene11.cs" />
     <Compile Include="Wrappers\MyTextureData.cs" />
     <Compile Include="Wrappers\BorrowedRtvTexture.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

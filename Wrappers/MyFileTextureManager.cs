@@ -4,7 +4,7 @@ using System.Collections;
 using System.Reflection;
 using VRage.Utils;
 
-namespace avaness.CameraLCDRevived.Wrappers
+namespace avaness.CameraLCD.Wrappers
 {
     public class MyFileTextureManager
     {

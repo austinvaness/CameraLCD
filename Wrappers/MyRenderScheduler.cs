@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace avaness.CameraLCDRevived.Wrappers
+namespace avaness.CameraLCD.Wrappers
 {
     public class MyRenderScheduler
     {

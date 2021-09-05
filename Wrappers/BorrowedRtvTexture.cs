@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using VRage.Render.Image;
 using VRageMath;
 
-namespace avaness.CameraLCDRevived.Wrappers
+namespace avaness.CameraLCD.Wrappers
 {
     public class BorrowedRtvTexture
     {

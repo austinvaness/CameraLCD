@@ -1,4 +1,4 @@
-﻿namespace avaness.CameraLCDRevived.Patch
+﻿namespace avaness.CameraLCD.Patch
 {
     public static class Patch_UpdateLODs
     {
