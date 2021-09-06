@@ -38,6 +38,7 @@ namespace avaness.CameraLCD
         private readonly IMyTerminalBlock terminalBlock;
         private bool needsTerminal;
         private DisplayId id;
+        private byte[] buffer = new byte[0];
 
         public CameraTSS(IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
@@ -191,11 +192,11 @@ namespace avaness.CameraLCD
 
         private void DrawOnScreen(string textureName, BorrowedRtvTexture texture)
         {
-            byte[] data = texture.GetData();
             int requiredSize = panelComponent.TextureByteCount;
-            if (data.Length < requiredSize)
-                Array.Resize(ref data, requiredSize);
-            MyManagers.FileTextures.ResetGeneratedTexture(textureName, data);
+            if (buffer.Length < requiredSize)
+                buffer = new byte[requiredSize];
+            texture.GetData(buffer);
+            MyManagers.FileTextures.ResetGeneratedTexture(textureName, buffer);
         }
     }
 }
