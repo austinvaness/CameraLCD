@@ -2,7 +2,6 @@
 using System;
 using System.Collections;
 using System.Reflection;
-using VRage.Utils;
 
 namespace avaness.CameraLCD.Wrappers
 {

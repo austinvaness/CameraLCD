@@ -1,10 +1,8 @@
 ﻿using avaness.CameraLCD.Patch;
 using HarmonyLib;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using VRage.Plugins;
 
 namespace avaness.CameraLCD
@@ -46,9 +44,7 @@ namespace avaness.CameraLCD
         { }
 
         public void Dispose()
-        {
-            displays.Clear();
-        }
+        { }
 
         public static void AddDisplay(DisplayId id, CameraTSS browser)
         {

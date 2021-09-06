@@ -1,22 +1,12 @@
 ﻿using HarmonyLib;
 using System;
 using System.Reflection;
-using Sandbox.Game.Weapons;
 using Sandbox.Game.World;
-using Sandbox.Graphics.GUI;
-using SharpDX.DXGI;
-using SharpDX.Mathematics.Interop;
 using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using VRage.Game.Utils;
-using VRage.Render.Scene;
 using VRageMath;
 using VRageRender;
 using VRageRender.Messages;
-using avaness.CameraLCD.Wrappers;
-using VRage.Render.Image;
 
 namespace avaness.CameraLCD.Patch
 {
