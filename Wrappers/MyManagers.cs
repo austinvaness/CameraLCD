@@ -12,6 +12,7 @@ namespace avaness.CameraLCD.Wrappers
             geometryRenderer = t.GetField("GeometryRenderer", BindingFlags.Public | BindingFlags.Static);
             rwTexturesPool = t.GetField("RwTexturesPool", BindingFlags.Public | BindingFlags.Static);
             fileTextures = t.GetField("FileTextures", BindingFlags.Public | BindingFlags.Static);
+            modelFactory = t.GetField("ModelFactory", BindingFlags.Public | BindingFlags.Static);
         }
 
         private static readonly FieldInfo geometryRenderer;
@@ -38,6 +39,15 @@ namespace avaness.CameraLCD.Wrappers
             get
             {
                 return new MyFileTextureManager(fileTextures.GetValue(null));
+            }
+        }
+
+        private static readonly FieldInfo modelFactory;
+        public static MyModelFactory ModelFactory
+        {
+            get
+            {
+                return new MyModelFactory(modelFactory.GetValue(null));
             }
         }
     }

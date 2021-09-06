@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 using System.Reflection;
+using VRageRender;
 
 namespace avaness.CameraLCD.Wrappers
 {
@@ -12,6 +13,7 @@ namespace avaness.CameraLCD.Wrappers
         {
             Type t = AccessTools.TypeByName("VRage.Render11.GeometryStage2.Rendering.MyGeometryRenderer");
             isLodUpdateEnabled = t.GetField("IsLodUpdateEnabled", BindingFlags.Public | BindingFlags.Instance);
+            m_globalLoddingSettings = t.GetField("m_globalLoddingSettings", BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
         public MyGeometryRenderer(object instance)
@@ -29,6 +31,19 @@ namespace avaness.CameraLCD.Wrappers
             set
             {
                 isLodUpdateEnabled.SetValue(instance, value);
+            }
+        }
+
+        private static readonly FieldInfo m_globalLoddingSettings;
+        public MyGlobalLoddingSettings Settings
+        {
+            get
+            {
+                return (MyGlobalLoddingSettings)m_globalLoddingSettings.GetValue(instance);
+            }
+            set
+            {
+                m_globalLoddingSettings.SetValue(instance, value);
             }
         }
     }

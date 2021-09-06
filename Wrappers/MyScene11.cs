@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using Sandbox.Engine.Utils;
 using System;
 using System.Reflection;
 using VRage.Render.Scene;
@@ -11,13 +12,13 @@ namespace avaness.CameraLCD.Wrappers
         static MyScene11()
         {
             Type t = AccessTools.TypeByName("VRage.Render11.Scene.MyScene11");
-            addMaterialRenderFlagChange = AccessTools.Method(t, "AddMaterialRenderFlagChange");
+            addMaterialRenderFlagChange = ReflectionHelper.CreateStaticDelegate<uint, MyEntityMaterialKey, RenderFlagsChange>(t, "AddMaterialRenderFlagChange");
         }
 
-        private static readonly MethodInfo addMaterialRenderFlagChange;
+        private static readonly Action<uint, MyEntityMaterialKey, RenderFlagsChange> addMaterialRenderFlagChange;
         public static void AddMaterialRenderFlagChange(uint ID, MyEntityMaterialKey materialKey, RenderFlagsChange value)
         {
-            addMaterialRenderFlagChange.Invoke(null, new object[] { ID, materialKey, value });
+            addMaterialRenderFlagChange(ID, materialKey, value);
         }
 
     }

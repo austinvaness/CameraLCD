@@ -121,8 +121,9 @@ namespace avaness.CameraLCD
 
             MatrixD viewMatrix = Camera.GetViewMatrix();
 
-            if(!CameraLCD.Settings.UpdateLOD) // TODO: Fix
-                MyManagers.GeometryRenderer.IsLodUpdateEnabled = false;
+            bool initialLods = true;
+            if (!CameraLCD.Settings.UpdateLOD)
+                initialLods = SetLoddingEnabled(false);
 
             SetCameraViewMatrix(viewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, Camera.WorldMatrix.Translation, smooth: false);
 
@@ -133,7 +134,7 @@ namespace avaness.CameraLCD
             SetCameraViewMatrix(renderCamera.ViewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, renderCamera.Position, lastMomentUpdateIndex: 0, smooth: false);
 
             if (!CameraLCD.Settings.UpdateLOD)
-                MyManagers.GeometryRenderer.IsLodUpdateEnabled = false;
+                SetLoddingEnabled(initialLods);
         }
 
         private BorrowedRtvTexture DrawGame()
@@ -169,6 +170,25 @@ namespace avaness.CameraLCD
 
                 }
             }
+        }
+
+        private bool SetLoddingEnabled(bool enabled)
+        {
+            // Reference: MyRender11.ProcessMessageInternal(MyRenderMessageBase message, int frameId)
+            //              case MyRenderMessageEnum.UpdateNewLoddingSettings
+
+            MyNewLoddingSettings loddingSettings = MyCommon.LoddingSettings;
+            MyGlobalLoddingSettings globalSettings = loddingSettings.Global;
+            bool initial = globalSettings.IsUpdateEnabled;
+            if (initial == enabled)
+                return initial;
+
+            globalSettings.IsUpdateEnabled = enabled;
+            loddingSettings.Global = globalSettings;
+            MyManagers.GeometryRenderer.IsLodUpdateEnabled = enabled;
+            MyManagers.GeometryRenderer.Settings = globalSettings;
+            MyManagers.ModelFactory.OnLoddingSettingChanged();
+            return initial;
         }
 
         private void SetCameraViewMatrix(MatrixD viewMatrix, Matrix projectionMatrix, Matrix projectionFarMatrix, float fov, float fovSkybox, float nearPlane, float farPlane, float farFarPlane, Vector3D cameraPosition, float projectionOffsetX = 0f, float projectionOffsetY = 0f, int lastMomentUpdateIndex = 1, bool smooth = true)

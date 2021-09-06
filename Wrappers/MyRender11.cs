@@ -17,11 +17,11 @@ namespace avaness.CameraLCD.Wrappers
             m_rc = t.GetField("m_rc", BindingFlags.NonPublic | BindingFlags.Static);
             settings = t.GetField("Settings", BindingFlags.NonPublic | BindingFlags.Static);
             postprocess = t.GetField("Postprocess", BindingFlags.NonPublic | BindingFlags.Static);
-            swapChain = t.GetField("m_swapchain", BindingFlags.NonPublic | BindingFlags.Static);
 
-            setupCameraMatrices = t.GetMethod("SetupCameraMatrices", BindingFlags.Public | BindingFlags.Static);
+            setupCameraMatrices = ReflectionHelper.CreateStaticDelegate<MyRenderMessageSetCameraViewMatrix>(t, "SetupCameraMatrices");
             drawGameScene = t.GetMethod("DrawGameScene", BindingFlags.NonPublic | BindingFlags.Static);
-            processMessageQueue = AccessTools.Method(t, "ProcessMessageQueue", new Type[0]);
+            processMessageQueue = ReflectionHelper.CreateStaticDelegate(t, "ProcessMessageQueue");
+            processMessageInternal = ReflectionHelper.CreateStaticDelegate<MyRenderMessageBase, int>(t, "ProcessMessageInternal");
 
             get_deviceInstance = t.GetProperty("DeviceInstance", BindingFlags.NonPublic | BindingFlags.Static).GetGetMethod(true);
         }
@@ -58,10 +58,10 @@ namespace avaness.CameraLCD.Wrappers
         }
 
 
-        private static readonly MethodInfo setupCameraMatrices;
+        private static readonly Action<MyRenderMessageSetCameraViewMatrix> setupCameraMatrices;
         public static void SetupCameraMatrices(MyRenderMessageSetCameraViewMatrix message)
         {
-            setupCameraMatrices.Invoke(null, new object[] { message });
+            setupCameraMatrices(message);
         }
 
 
@@ -73,19 +73,10 @@ namespace avaness.CameraLCD.Wrappers
             debugAmbientOcclusion = args[1];
         }
 
-        private static readonly MethodInfo processMessageQueue;
+        private static readonly Action processMessageQueue;
         public static void ProcessMessageQueue()
         {
-            processMessageQueue.Invoke(null, new object[0]);
-        }
-
-        private static readonly FieldInfo swapChain;
-        public static SharpDX.DXGI.SwapChain SwapChain
-        {
-            get
-            {
-                return (SharpDX.DXGI.SwapChain)swapChain.GetValue(null);
-            }
+            processMessageQueue();
         }
 
         private static readonly MethodInfo get_deviceInstance;
@@ -105,11 +96,16 @@ namespace avaness.CameraLCD.Wrappers
                 return new MyRenderContext(m_rc.GetValue(null));
             }
         }
+
+        private static readonly Action<MyRenderMessageBase, int> processMessageInternal;
+        public static void ProcessMessage(MyRenderMessageBase message)
+        {
+            processMessageInternal(message, 0);
+        }
     }
 
     public static class MyImmediateRC
     {
         public static MyRenderContext RC => MyRender11.RC;
     }
-
 }

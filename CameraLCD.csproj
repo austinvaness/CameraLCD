@@ -92,15 +92,17 @@
     <Compile Include="Patch\Patch_UpdateLODs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Wrappers\MyBorrowedRwTextureManager.cs" />
+    <Compile Include="Wrappers\MyCommon.cs" />
     <Compile Include="Wrappers\MyFileTextureManager.cs" />
-    <Compile Include="Wrappers\MyGeneratedTextureManager.cs" />
     <Compile Include="Wrappers\MyGeometryRenderer.cs" />
     <Compile Include="Wrappers\MyManagers.cs" />
+    <Compile Include="Wrappers\MyModelFactory.cs" />
     <Compile Include="Wrappers\MyRender11.cs" />
     <Compile Include="Wrappers\MyRenderContext.cs" />
     <Compile Include="Wrappers\MyRenderScheduler.cs" />
     <Compile Include="Wrappers\MyScene11.cs" />
     <Compile Include="Wrappers\BorrowedRtvTexture.cs" />
+    <Compile Include="Wrappers\ReflectionHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
