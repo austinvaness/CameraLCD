@@ -100,7 +100,6 @@
     <Compile Include="Wrappers\MyRenderContext.cs" />
     <Compile Include="Wrappers\MyRenderScheduler.cs" />
     <Compile Include="Wrappers\MyScene11.cs" />
-    <Compile Include="Wrappers\MyTextureData.cs" />
     <Compile Include="Wrappers\BorrowedRtvTexture.cs" />
   </ItemGroup>
   <ItemGroup>

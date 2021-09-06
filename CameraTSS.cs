@@ -6,6 +6,7 @@ using avaness.CameraLCD.Wrappers;
 using Sandbox.Game.Components;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
+using Sandbox.Game.Entities.Character;
 using Sandbox.Game.GameSystems;
 using Sandbox.Game.GameSystems.TextSurfaceScripts;
 using Sandbox.Game.World;
@@ -100,25 +101,19 @@ namespace avaness.CameraLCD
         /// </summary>
         public void OnDrawScene()
         {
-            if (!TryGetTextureName(out string textureName) && Camera != null)
+            if (!TryGetTextureName(out string screenName) && Camera != null)
                 return;
 
             MyCamera renderCamera = MySector.MainCamera;
             if (renderCamera == null)
                 return;
 
-            MatrixD viewMatrix = GetViewMatrix();
+            MatrixD viewMatrix = Camera.GetViewMatrix();
 
             SetCameraViewMatrix(viewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, Camera.WorldMatrix.Translation, smooth: false);
 
             BorrowedRtvTexture texture = DrawGame();
-
-            byte[] data = texture.GetData();
-            int requiredSize = panelComponent.TextureByteCount;
-            if(data.Length < requiredSize)
-                Array.Resize(ref data, requiredSize);
-            Draw(textureName, data);
-
+            DrawOnScreen(screenName, texture);
             texture.Release();
 
             SetCameraViewMatrix(renderCamera.ViewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, renderCamera.Position, lastMomentUpdateIndex: 0, smooth: false);
@@ -128,41 +123,37 @@ namespace avaness.CameraLCD
         private BorrowedRtvTexture DrawGame()
         {
             BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", (int)panelComponent.TextureSize.X, (int)panelComponent.TextureSize.Y, Format.R8G8B8A8_UNorm_SRgb);
-            MyRender11.DrawGameScene(texture, out _);
             DrawCharacterHead();
+            MyRender11.DrawGameScene(texture, out _);
 
             return texture;
         }
 
         private void DrawCharacterHead()
         {
-            if (CameraLCD.Settings.HeadFix && MySession.Static != null && MySession.Static.LocalCharacter != null && MySession.Static.LocalCharacter.Render != null && MySession.Static.LocalCharacter.IsInFirstPersonView)
+            // TODO: Fix
+            if (CameraLCD.Settings.HeadFix && MySession.Static != null)
             {
-                uint myChar = MySession.Static.LocalCharacter.Render.RenderObjectIDs[0];
-                if (myChar > 0)
+                MyCharacter cha = MySession.Static.LocalCharacter;
+                if (cha != null && cha.Render != null && cha.IsInFirstPersonView)
                 {
-                    foreach (string mat in MySession.Static.LocalCharacter.Definition.MaterialsDisabledIn1st)
+                    // Reference: MyCharacter.UpdateHeadModelProperties(bool enabled)
+                    uint id = cha.Render.RenderObjectIDs[0];
+                    if (id != uint.MaxValue)
                     {
-                        MyScene11.AddMaterialRenderFlagChange(myChar, new MyEntityMaterialKey(mat),
-                            new RenderFlagsChange() { Add = RenderFlags.Visible, Remove = 0 });
+                        foreach (string mat in cha.Definition.MaterialsDisabledIn1st)
+                        {
+                            //MyRenderProxy.UpdateModelProperties(id, mat, RenderFlags.Visible, 0, null, null);
+                            
+                            MyScene11.AddMaterialRenderFlagChange(id, new MyEntityMaterialKey(mat),
+                                new RenderFlagsChange() { Add = RenderFlags.Visible, Remove = 0 });
+                        }
+
+                        //MyIDTracker<MyActor>.FindByID(id)?.UpdateBeforeDraw();
                     }
+
                 }
-
             }
-        }
-
-        private MatrixD GetViewMatrix()
-        {
-
-            return Camera.GetViewMatrix();
-            /*
-            var position = Camera.PositionComp;
-            MatrixD orientation = position.GetOrientation();
-            Vector3D pos = position.GetPosition();
-            Vector3D up = orientation.Up;
-            Vector3D target = pos + orientation.Forward;
-            return MatrixD.CreateLookAt(pos, target, up);
-            */
         }
 
         private void SetCameraViewMatrix(MatrixD viewMatrix, Matrix projectionMatrix, Matrix projectionFarMatrix, float fov, float fovSkybox, float nearPlane, float farPlane, float farFarPlane, Vector3D cameraPosition, float projectionOffsetX = 0f, float projectionOffsetY = 0f, int lastMomentUpdateIndex = 1, bool smooth = true)
@@ -198,36 +189,13 @@ namespace avaness.CameraLCD
             }
         }
 
-        public void Draw(string textureName, byte[] videoData)
+        private void DrawOnScreen(string textureName, BorrowedRtvTexture texture)
         {
-
-            MyManagers.FileTextures.ResetGeneratedTexture(textureName, videoData);//GetBGRValues(videoData));
-            //MyRenderProxy.ResetGeneratedTexture(textureName, videoData);
-
-            //Marshal.Copy(e.BufferHandle, videoData, 0, e.Width * e.Height * 4);
-            /*if (videoData.Length < 1024 * 1024 * 4)
-                Array.Resize(ref videoData, 1024 * 1024 * 4);*/
-
-
-            //e.Handled = true;
-            //_browser.GetBrowserHost().Invalidate(PaintElementType.View);
-        }
-
-        private byte[] GetBGRValues(byte[] data)
-        {
-            var bmp = new System.Drawing.Bitmap(new MemoryStream(data));
-            System.Drawing.Rectangle rect = new System.Drawing.Rectangle(0, 0, bmp.Width, bmp.Height);
-            bmp = bmp.Clone(rect, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            System.Drawing.Imaging.BitmapData bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
-            bmpData.Stride = -bmpData.Stride;
-
-            int rowBytes = bmpData.Width * System.Drawing.Image.GetPixelFormatSize(bmp.PixelFormat) / 8;
-            int imgBytes = bmp.Height * rowBytes;
-
-            IntPtr ptr = bmpData.Scan0;
-            Marshal.Copy(ptr, data, 0, imgBytes);
-            bmp.UnlockBits(bmpData);
-            return data;
+            byte[] data = texture.GetData();
+            int requiredSize = panelComponent.TextureByteCount;
+            if (data.Length < requiredSize)
+                Array.Resize(ref data, requiredSize);
+            MyManagers.FileTextures.ResetGeneratedTexture(textureName, data);
         }
     }
 }
