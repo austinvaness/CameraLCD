@@ -1,15 +1,16 @@
 ﻿using avaness.CameraLCD.Patch;
 using HarmonyLib;
+using Sandbox.ModAPI;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using VRage.Plugins;
+using VRage.Utils;
 
 namespace avaness.CameraLCD
 {
     public class CameraLCD : IPlugin
     {
-        public static bool rendering = false;
         public static CameraLCDSettings Settings = new CameraLCDSettings();
 
         private static readonly ConcurrentDictionary<DisplayId, CameraTSS> displays = new ConcurrentDictionary<DisplayId, CameraTSS>();
@@ -48,12 +49,15 @@ namespace avaness.CameraLCD
 
         public static void AddDisplay(DisplayId id, CameraTSS browser)
         {
-            displays.TryAdd(id, browser);
+            if (id.EntityId != 0)
+                displays.TryAdd(id, browser);
         }
 
         public static void RemoveDisplay(DisplayId id)
         {
-            displays.TryRemove(id, out _);
+            if (id.EntityId != 0)
+                displays.TryRemove(id, out _);
+
         }
 
         public static bool HasNextDisplay()

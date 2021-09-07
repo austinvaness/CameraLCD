@@ -3,6 +3,7 @@ using avaness.CameraLCD.Wrappers;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Character;
+using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems;
 using Sandbox.Game.GameSystems.TextSurfaceScripts;
 using Sandbox.Game.World;
@@ -21,26 +22,24 @@ namespace avaness.CameraLCD
     [MyTextSurfaceScript("TSS_CameraDisplay", "Camera Display")]
     public class CameraTSS : MyTSSCommon
     {
-        public MyCameraBlock Camera { get; private set; }
-
         public override ScriptUpdate NeedsUpdate => ScriptUpdate.Update100;
 
         private readonly MyTextPanelComponent panelComponent;
-        private readonly IMyTerminalBlock terminalBlock;
-        private bool cameraExists;
-        private DisplayId id;
+        private readonly MyTerminalBlock terminalBlock;
+        private DisplayId id => new DisplayId(terminalBlock.EntityId, panelComponent.Area);
+
+        private MyCameraBlock camera;
+        private bool registered, functional;
         private byte[] buffer = new byte[0];
 
         public CameraTSS(IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
             panelComponent = (MyTextPanelComponent)surface;
-            terminalBlock = (IMyTerminalBlock)block;
+            terminalBlock = (MyTerminalBlock)block;
             terminalBlock.OnMarkForClose += BlockMarkedForClose;
             terminalBlock.CustomDataChanged += TerminalBlock_CustomDataChanged;
+            terminalBlock.IsWorkingChanged += IsWorkingChanged;
             TerminalBlock_CustomDataChanged(terminalBlock);
-            id = new DisplayId(terminalBlock.EntityId, panelComponent.Area);
-
-            MyAPIGateway.Utilities.ShowNotification($"Surface: {panelComponent.Area} {block.GetType().Name} Size: {panelComponent.TextureSize}", 10000);
         }
 
         public override void Dispose()
@@ -48,9 +47,8 @@ namespace avaness.CameraLCD
             base.Dispose(); // do not remove
             terminalBlock.OnMarkForClose -= BlockMarkedForClose;
             terminalBlock.CustomDataChanged -= TerminalBlock_CustomDataChanged;
-            CameraLCD.RemoveDisplay(id);
-            if (Camera != null)
-                Camera.OnClose -= Camera_OnClose;
+            terminalBlock.IsWorkingChanged -= IsWorkingChanged;
+            Unregister();
 
             // TODO: Fix freeze on session unload
         }
@@ -60,15 +58,47 @@ namespace avaness.CameraLCD
             Dispose();
         }
 
+        private void Register(MyCameraBlock cameraBlock)
+        {
+            camera = cameraBlock;
+            camera.OnClose += Camera_OnClose;
+            camera.IsWorkingChanged += IsWorkingChanged;
+            CameraLCD.AddDisplay(id, this);
+            registered = true;
+            IsWorkingChanged(camera);
+        }
+
+        private void IsWorkingChanged(MyCubeBlock b)
+        {
+            if (camera == null)
+                functional = false;
+            else
+                functional = terminalBlock.IsWorking && camera.IsWorking;
+        }
+
+        private void Unregister()
+        {
+            if (!registered)
+                return;
+
+            if(camera != null)
+            {
+                camera.OnClose -= Camera_OnClose;
+                camera.IsWorkingChanged -= IsWorkingChanged;
+            }
+            camera = null;
+            CameraLCD.RemoveDisplay(id);
+            registered = false;
+            functional = false;
+        }
+
         private void TerminalBlock_CustomDataChanged(IMyTerminalBlock block)
         {
             string text = block.CustomData ?? "";
             MyGridTerminalSystem terminal = (MyGridTerminalSystem)MyAPIGateway.TerminalActionsHelper.GetTerminalSystemForGrid(block.CubeGrid);
             if (terminal == null)
             {
-                Camera = null;
-                CameraLCD.RemoveDisplay(id);
-                cameraExists = false;
+                Unregister();
                 return;
             }
 
@@ -76,31 +106,23 @@ namespace avaness.CameraLCD
             {
                 if (b is MyCameraBlock cameraBlock && b.CustomName.ToString() == text)
                 {
-                    Camera = cameraBlock;
-                    Camera.OnClose += Camera_OnClose;
-                    CameraLCD.AddDisplay(id, this);
-                    cameraExists = true;
+                    Register(cameraBlock);
                     return;
                 }
             }
 
-            Camera = null;
-            CameraLCD.RemoveDisplay(id);
-            cameraExists = false;
+            Unregister();
         }
 
         private void Camera_OnClose(VRage.Game.Entity.MyEntity e)
         {
-            e.OnClose -= Camera_OnClose;
-            Camera = null;
-            CameraLCD.RemoveDisplay(id);
-            cameraExists = false;
+            Unregister();
         }
 
         public override void Run()
         {
             base.Run(); // do not remove
-            if (!cameraExists)
+            if (!registered)
                 TerminalBlock_CustomDataChanged(terminalBlock);
         }
 
@@ -109,23 +131,23 @@ namespace avaness.CameraLCD
         /// </summary>
         public void OnDrawScene()
         {
-            if (!TryGetTextureName(out string screenName) || Camera == null)
+            if (!TryGetTextureName(out string screenName) || camera == null || !functional)
                 return;
 
             MyCamera renderCamera = MySector.MainCamera;
             if (renderCamera == null)
                 return;
 
-            if (renderCamera.GetDistanceFromPoint(Camera.WorldMatrix.Translation) > CameraLCD.Settings.Range)
+            if (renderCamera.GetDistanceFromPoint(camera.WorldMatrix.Translation) > CameraLCD.Settings.Range)
                 return;
 
-            MatrixD viewMatrix = Camera.GetViewMatrix();
+            MatrixD viewMatrix = camera.GetViewMatrix();
 
             bool initialLods = true;
             if (!CameraLCD.Settings.UpdateLOD)
                 initialLods = SetLoddingEnabled(false);
 
-            SetCameraViewMatrix(viewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, Camera.WorldMatrix.Translation, smooth: false);
+            SetCameraViewMatrix(viewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, camera.WorldMatrix.Translation, smooth: false);
 
             BorrowedRtvTexture texture = DrawGame();
             DrawOnScreen(screenName, texture);
