@@ -26,7 +26,7 @@ namespace avaness.CameraLCD
 
         private readonly MyTextPanelComponent panelComponent;
         private readonly MyTerminalBlock terminalBlock;
-        private DisplayId id => new DisplayId(terminalBlock.EntityId, panelComponent.Area);
+        private DisplayId Id => new DisplayId(terminalBlock.EntityId, panelComponent.Area);
 
         private MyCameraBlock camera;
         private bool registered, functional;
@@ -49,8 +49,6 @@ namespace avaness.CameraLCD
             terminalBlock.CustomDataChanged -= TerminalBlock_CustomDataChanged;
             terminalBlock.IsWorkingChanged -= IsWorkingChanged;
             Unregister();
-
-            // TODO: Fix freeze on session unload
         }
 
         void BlockMarkedForClose(IMyEntity ent)
@@ -63,7 +61,7 @@ namespace avaness.CameraLCD
             camera = cameraBlock;
             camera.OnClose += Camera_OnClose;
             camera.IsWorkingChanged += IsWorkingChanged;
-            CameraLCD.AddDisplay(id, this);
+            CameraLCD.AddDisplay(Id, this);
             registered = true;
             IsWorkingChanged(camera);
         }
@@ -87,7 +85,7 @@ namespace avaness.CameraLCD
                 camera.IsWorkingChanged -= IsWorkingChanged;
             }
             camera = null;
-            CameraLCD.RemoveDisplay(id);
+            CameraLCD.RemoveDisplay(Id);
             registered = false;
             functional = false;
         }
@@ -169,7 +167,6 @@ namespace avaness.CameraLCD
 
         private void DrawCharacterHead()
         {
-            // TODO: Fix
             if (CameraLCD.Settings.HeadFix && MySession.Static != null)
             {
                 MyCharacter cha = MySession.Static.LocalCharacter;
@@ -179,15 +176,22 @@ namespace avaness.CameraLCD
                     uint id = cha.Render.RenderObjectIDs[0];
                     if (id != uint.MaxValue)
                     {
-                        foreach (string mat in cha.Definition.MaterialsDisabledIn1st)
+                        foreach (string materialName in cha.Definition.MaterialsDisabledIn1st)
                         {
-                            //MyRenderProxy.UpdateModelProperties(id, mat, RenderFlags.Visible, 0, null, null);
-                            
-                            MyScene11.AddMaterialRenderFlagChange(id, new MyEntityMaterialKey(mat),
-                                new RenderFlagsChange() { Add = RenderFlags.Visible, Remove = 0 });
-                        }
+                            // Reference: MyRenderProxy.UpdateModelProperties(id, mat, RenderFlags.Visible, 0, null, null);
 
-                        //MyIDTracker<MyActor>.FindByID(id)?.UpdateBeforeDraw();
+                            MyRenderMessageUpdateModelProperties test = MyRenderProxy.MessagePool.Get<MyRenderMessageUpdateModelProperties>(MyRenderMessageEnum.UpdateModelProperties);
+                            test.ID = id;
+                            test.MaterialName = materialName;
+                            test.FlagsChange = new RenderFlagsChange()
+                            {
+                                Add = RenderFlags.Visible,
+                                Remove = 0,
+                            };
+                            test.DiffuseColor = null;
+                            test.Emissivity = null;
+                            MyRender11.ProcessMessage(test);
+                        }
                     }
 
                 }
