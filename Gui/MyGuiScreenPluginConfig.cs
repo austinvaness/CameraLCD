@@ -165,7 +165,6 @@ namespace avaness.CameraLCD.Gui
             Controls.Add(myGuiControlSlider);
 
             Controls.Add(myGuiControlCombobox);
-            myGuiControlCombobox.AddItem(1L, "1x", null, null);
             myGuiControlCombobox.AddItem(2L, "2x", null, null);
             myGuiControlCombobox.AddItem(3L, "3x", null, null);
             myGuiControlCombobox.AddItem(4L, "4x", null, null);
