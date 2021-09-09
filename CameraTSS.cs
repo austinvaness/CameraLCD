@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using avaness.CameraLCD.Wrappers;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
@@ -139,22 +140,27 @@ namespace avaness.CameraLCD
             if (renderCamera.GetDistanceFromPoint(camera.WorldMatrix.Translation) > CameraLCD.Settings.Range)
                 return;
 
-            MatrixD viewMatrix = camera.GetViewMatrix();
-
             bool initialLods = true;
             if (!CameraLCD.Settings.UpdateLOD)
                 initialLods = SetLoddingEnabled(false);
 
-            SetCameraViewMatrix(viewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, camera.WorldMatrix.Translation, smooth: false);
+            MatrixD viewMatrix = camera.GetViewMatrix();
+            float fov = GetCameraFov();
+            SetCameraViewMatrix(viewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, fov, fov, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, camera.WorldMatrix.Translation, smooth: false);
 
             BorrowedRtvTexture texture = DrawGame();
             DrawOnScreen(screenName, texture);
             texture.Release();
 
-            SetCameraViewMatrix(renderCamera.ViewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FovWithZoom, renderCamera.FovWithZoom, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, renderCamera.Position, lastMomentUpdateIndex: 0, smooth: false);
+            SetCameraViewMatrix(renderCamera.ViewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FieldOfView, renderCamera.FieldOfView, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, renderCamera.Position, lastMomentUpdateIndex: 0, smooth: false);
 
             if (!CameraLCD.Settings.UpdateLOD)
                 SetLoddingEnabled(initialLods);
+        }
+
+        private float GetCameraFov()
+        {
+            return (float)typeof(MyCameraBlock).GetField("m_fov", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(camera);
         }
 
         private BorrowedRtvTexture DrawGame()
