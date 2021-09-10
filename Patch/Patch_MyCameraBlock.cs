@@ -45,7 +45,7 @@ namespace avaness.CameraLCD.Patch
 
         private static void WriteCameraFov(MyCameraBlock block, StringBuilder writeTo)
         {
-            writeTo.Append(MathHelper.ToDegrees(GetCameraFov(block)));
+            writeTo.Append((int)MathHelper.ToDegrees(GetCameraFov(block)));
         }
 
         private static float GetCameraFov(MyCameraBlock block)
