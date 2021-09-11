@@ -13,6 +13,12 @@ namespace avaness.CameraLCD.Wrappers
             setter = (Action<T>)Delegate.CreateDelegate(typeof(Action<T>), prop.GetSetMethod(true));
         }
 
+        public static Func<T> CreateStaticPropDelegate<T>(Type t, string name)
+        {
+            PropertyInfo prop = t.GetProperty(name, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public, null, typeof(T), new Type[0], null);
+            return (Func<T>)Delegate.CreateDelegate(typeof(Func<T>), prop.GetGetMethod(true));
+        }
+
         public static Action CreateStaticDelegate(Type t, string name)
         {
             return (Action)Delegate.CreateDelegate(typeof(Action), t.GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public, null, new Type[0], null));

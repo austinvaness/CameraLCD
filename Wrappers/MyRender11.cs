@@ -2,6 +2,7 @@
 using SharpDX.Direct3D11;
 using System;
 using System.Reflection;
+using VRageMath;
 using VRageRender;
 using VRageRender.Messages;
 
@@ -23,7 +24,9 @@ namespace avaness.CameraLCD.Wrappers
             processMessageQueue = ReflectionHelper.CreateStaticDelegate(t, "ProcessMessageQueue");
             processMessageInternal = ReflectionHelper.CreateStaticDelegate<MyRenderMessageBase, int>(t, "ProcessMessageInternal");
 
-            get_deviceInstance = t.GetProperty("DeviceInstance", BindingFlags.NonPublic | BindingFlags.Static).GetGetMethod(true);
+            get_deviceInstance = ReflectionHelper.CreateStaticPropDelegate<Device1>(t, "DeviceInstance");
+            get_resolutionI = ReflectionHelper.CreateStaticPropDelegate<Vector2I>(t, "ResolutionI");
+
         }
 
         private static readonly FieldInfo m_debugOverrides;
@@ -79,12 +82,12 @@ namespace avaness.CameraLCD.Wrappers
             processMessageQueue();
         }
 
-        private static readonly MethodInfo get_deviceInstance;
+        private static readonly Func<Device1> get_deviceInstance;
         public static Device1 DeviceInstance
         {
             get
             {
-                return (Device1)get_deviceInstance.Invoke(null, new object[0]);
+                return get_deviceInstance();
             }
         }
 
@@ -94,6 +97,15 @@ namespace avaness.CameraLCD.Wrappers
             get
             {
                 return new MyRenderContext(m_rc.GetValue(null));
+            }
+        }
+
+        private static readonly Func<Vector2I> get_resolutionI;
+        public static Vector2I ResolutionI
+        {
+            get
+            {
+                return get_resolutionI();
             }
         }
 
