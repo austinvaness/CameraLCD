@@ -172,6 +172,7 @@ namespace avaness.CameraLCD
             // Ex 1920/1080 = 1.7777777
 
             Vector2I targetResolution = (Vector2I)panelComponent.TextureSize;
+            MyRender11.ResolutionI = targetResolution;
             Vector2 targetReal = panelComponent.SurfaceSize;
             float targetRatio = targetReal.X / targetReal.Y;
             // Ex 512/512 = 1
@@ -194,6 +195,7 @@ namespace avaness.CameraLCD
             BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", targetResolution.X, targetResolution.Y, Format.R8G8B8A8_UNorm_SRgb);
             DrawCharacterHead();
             MyRender11.DrawGameScene(texture, out _);
+            MyRender11.ResolutionI = sourceResolution;
             return texture;
         }
 

@@ -18,6 +18,7 @@ namespace avaness.CameraLCD.Wrappers
             m_rc = t.GetField("m_rc", BindingFlags.NonPublic | BindingFlags.Static);
             settings = t.GetField("Settings", BindingFlags.NonPublic | BindingFlags.Static);
             postprocess = t.GetField("Postprocess", BindingFlags.NonPublic | BindingFlags.Static);
+            m_resolution = t.GetField("m_resolution", BindingFlags.NonPublic | BindingFlags.Static);
 
             setupCameraMatrices = ReflectionHelper.CreateStaticDelegate<MyRenderMessageSetCameraViewMatrix>(t, "SetupCameraMatrices");
             drawGameScene = t.GetMethod("DrawGameScene", BindingFlags.NonPublic | BindingFlags.Static);
@@ -101,11 +102,16 @@ namespace avaness.CameraLCD.Wrappers
         }
 
         private static readonly Func<Vector2I> get_resolutionI;
+        private static readonly FieldInfo m_resolution;
         public static Vector2I ResolutionI
         {
             get
             {
                 return get_resolutionI();
+            }
+            set
+            {
+                m_resolution.SetValue(null, value);
             }
         }
 
