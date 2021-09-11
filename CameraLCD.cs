@@ -67,7 +67,7 @@ namespace avaness.CameraLCD
 
         public static bool IsRenderFrame()
         {
-            return Settings.Enabled && (renderCount % Settings.ratio) == 0;
+            return Settings.Enabled && (renderCount % Settings.Ratio) == 0;
         }
     }
 

@@ -39,7 +39,7 @@ namespace avaness.CameraLCD.Patch
         /* Fixes the steam overlay bleeding into OBS etc when steal mode enabled */
         public static bool Prefix_Present()
         {
-            if (CameraLCD.Settings.steal && CameraLCD.IsRenderFrame() && CameraLCD.HasNextDisplay())
+            if (CameraLCD.IsRenderFrame() && CameraLCD.HasNextDisplay())
             {
                 //                CameraLCD.log.Log("Prevented present");
                 return false;
