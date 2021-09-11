@@ -5,6 +5,7 @@ using SharpDX.DXGI;
 using System;
 using System.IO;
 using System.Reflection;
+using VRageMath;
 
 namespace avaness.CameraLCD.Wrappers
 {
@@ -31,10 +32,10 @@ namespace avaness.CameraLCD.Wrappers
             release.Invoke(Instance, new object[0]);
         }
 
-        public void GetData(byte[] buffer)
+        public void GetData(byte[] buffer, int bufferOffset, int bufferLength)
         {
             // Reference: MyTextureData.ToData(IResource res, byte[] screenData, MyImage.FileFormat fmt)
-            using (MemoryStream memoryStream = new MemoryStream(buffer, true))
+            using (MemoryStream memoryStream = new MemoryStream(buffer, bufferOffset, bufferLength, true))
             {
                 Save(Instance, memoryStream);
             }

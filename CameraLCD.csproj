@@ -88,6 +88,7 @@
     <Compile Include="Gui\MyGuiScreenPluginConfig.cs" />
     <Compile Include="CameraTSS.cs" />
     <Compile Include="Patch\Patch_LoadScripts.cs" />
+    <Compile Include="Patch\Patch_MyCameraBlock.cs" />
     <Compile Include="Patch\Patch_MyRender11.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Wrappers\MyBorrowedRwTextureManager.cs" />

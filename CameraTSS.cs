@@ -14,6 +14,7 @@ using VRage.Game.ModAPI;
 using VRage.Game.Utils;
 using VRage.ModAPI;
 using VRage.Render.Scene;
+using VRage.Utils;
 using VRageMath;
 using VRageRender;
 using VRageRender.Messages;
@@ -32,6 +33,7 @@ namespace avaness.CameraLCD
         private MyCameraBlock camera;
         private bool registered, functional;
         private byte[] buffer = new byte[0];
+        private int bufferOffset = 0;
 
         public CameraTSS(IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
@@ -165,7 +167,31 @@ namespace avaness.CameraLCD
 
         private BorrowedRtvTexture DrawGame()
         {
-            BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", (int)panelComponent.TextureSize.X, (int)panelComponent.TextureSize.Y, Format.R8G8B8A8_UNorm_SRgb);
+            Vector2I sourceResolution = MyRender11.ResolutionI;
+            float sourceRatio = (float)sourceResolution.X / sourceResolution.Y;
+            // Ex 1920/1080 = 1.7777777
+
+            Vector2I targetResolution = (Vector2I)panelComponent.TextureSize;
+            Vector2 targetReal = panelComponent.SurfaceSize;
+            float targetRatio = targetReal.X / targetReal.Y;
+            // Ex 512/512 = 1
+
+            if(targetRatio < sourceRatio)
+            {
+                int newHeight = (int)((targetResolution.Y / sourceRatio) * targetRatio);
+                int barHeight = (targetResolution.Y - newHeight) / 2;
+                bufferOffset = barHeight * targetResolution.X * 4;
+                if (bufferOffset < 0)
+                    bufferOffset = 0;
+                else
+                    targetResolution.Y = newHeight;
+            }
+            else
+            {
+                bufferOffset = 0;
+            }
+
+            BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", targetResolution.X, targetResolution.Y, Format.R8G8B8A8_UNorm_SRgb);
             DrawCharacterHead();
             MyRender11.DrawGameScene(texture, out _);
             return texture;
@@ -261,7 +287,7 @@ namespace avaness.CameraLCD
             int requiredSize = panelComponent.TextureByteCount;
             if (buffer.Length < requiredSize)
                 buffer = new byte[requiredSize];
-            texture.GetData(buffer);
+            texture.GetData(buffer, bufferOffset, buffer.Length - (2 * bufferOffset));
             MyManagers.FileTextures.ResetGeneratedTexture(textureName, buffer);
         }
     }
