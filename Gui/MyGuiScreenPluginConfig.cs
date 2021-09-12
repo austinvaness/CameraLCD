@@ -6,21 +6,25 @@ using VRage.Game;
 using VRage.Utils;
 using VRageMath;
 using Sandbox.Graphics.GUI;
+using Sandbox.ModAPI;
 
 namespace avaness.CameraLCD.Gui
 {
     public class MyGuiScreenPluginConfig : MyGuiScreenBase
     {
-        private MyGuiControlCombobox ratioCombobox;
-        private MyGuiControlButton okBtn;
+        private const float space = 0.01f;
 
-        public MyGuiScreenPluginConfig() : base(new Vector2?(new Vector2(0.5f, 0.5f)), new Vector4?(MyGuiConstants.SCREEN_BACKGROUND_COLOR), new Vector2?(new Vector2(0.7264286f, 0.8633588f)), false, null, MySandboxGame.Config.UIBkOpacity, MySandboxGame.Config.UIOpacity, null)
+        private MyGuiControlCombobox ratioCombobox;
+
+        public MyGuiScreenPluginConfig() : base(new Vector2(0.5f, 0.5f), MyGuiConstants.SCREEN_BACKGROUND_COLOR, new Vector2(0.7264286f, 0.8633588f), false, null, MySandboxGame.Config.UIBkOpacity, MySandboxGame.Config.UIOpacity)
         {
             EnabledBackgroundFade = true;
-            m_closeOnEsc = true;
-            m_drawEvenWithoutFocus = true;
-            CanHideOthers = true;
-            CanBeHidden = true;
+            CloseButtonEnabled = true;
+        }
+
+        public override string GetFriendlyName()
+        {
+            return "MyGuiScreenModConfig";
         }
 
         public override void LoadContent()
@@ -31,89 +35,90 @@ namespace avaness.CameraLCD.Gui
 
         public override void RecreateControls(bool constructor)
         {
-            base.RecreateControls(constructor);
-            BuildControls();
-        }
+            CameraLCDSettings settings = CameraLCD.Settings;
 
-        public override string GetFriendlyName()
-        {
-            return "MyGuiScreenModConfig";
-        }
+            MyGuiControlLabel caption = AddCaption("Camera LCD Settings");
+            Vector2 pos = caption.Position;
+            pos.Y += (caption.Size.Y / 2) + space;
 
-        protected void BuildControls()
-        {
-            AddCaption("CameraLCD Settings", null, new Vector2?(new Vector2(0f, 0.003f)), 0.8f);
-            MyGuiControlSeparatorList myGuiControlSeparatorList = new MyGuiControlSeparatorList();
-            myGuiControlSeparatorList.AddHorizontal(-new Vector2(m_size.Value.X * 0.78f / 2f, m_size.Value.Y / 2f - 0.075f), m_size.Value.X * 0.79f, 0f, null);
-            myGuiControlSeparatorList.AddHorizontal(-new Vector2(m_size.Value.X * 0.78f / 2f, -m_size.Value.Y / 2f + 0.023f), m_size.Value.X * 0.79f, 0f, null);
-            Controls.Add(myGuiControlSeparatorList);
+            MyGuiControlSeparatorList sperators = new MyGuiControlSeparatorList();
+            float sepWidth = Size.Value.X * 0.8f;
+            sperators.AddHorizontal(pos - new Vector2(sepWidth / 2, 0), sepWidth);
+            Controls.Add(sperators);
+            pos.Y += space;
 
-            okBtn = new MyGuiControlButton(new Vector2?(new Vector2(0, 0.40f)), MyGuiControlButtonStyleEnum.Default, null, null, MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_BOTTOM, null, MyTexts.Get(MyCommonTexts.Close), 0.8f, MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_CENTER, MyGuiControlHighlightType.WHEN_ACTIVE, new Action<MyGuiControlButton>(OnCloseButtonClick), GuiSounds.MouseClick, 1f, null, false)
-            {
-                Enabled = true
-            };
-            okBtn.ButtonClicked += OnOkButtonClick;
-            Controls.Add(okBtn);
-            CloseButtonEnabled = true;
-            float y = -0.25f;
-
-            Controls.Add(new MyGuiControlLabel(new Vector2(-0.16f, y - 0.05f), null, "Enabled"));
-            MyGuiControlCheckbox enabledCheckbox = new MyGuiControlCheckbox(new Vector2(0f, y - 0.05f), null, null, false, MyGuiControlCheckboxStyleEnum.Default, MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_CENTER)
-            {
-                IsChecked = CameraLCD.Settings.Enabled,
-                Enabled = true,
-                Visible = true
-            };
+            MyGuiControlCheckbox enabledCheckbox = new MyGuiControlCheckbox(pos, isChecked: settings.Enabled, originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP);
             enabledCheckbox.IsCheckedChanged += IsEnabledCheckedChanged;
             Controls.Add(enabledCheckbox);
+            AddCaption(enabledCheckbox, "Enabled");
+            pos.Y += enabledCheckbox.Size.Y + space;
 
-            Controls.Add(new MyGuiControlLabel(new Vector2(-0.16f, y + 0.05f), null, "Render ratio"));
-            ratioCombobox = new MyGuiControlCombobox(new Vector2(-0.02f, y + 0.025f), null, null, null, 10, null, false, "Base camera update rate relative to main FPS. 1x disables steal", MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_CENTER)
+            ratioCombobox = new MyGuiControlCombobox(pos, toolTip: "Base camera update rate relative to main FPS.", originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP)
             {
                 VisualStyle = MyGuiControlComboboxStyleEnum.Debug,
-                OriginAlign = MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP
             };
-            ratioCombobox.AddItem(2L, "2x", null, null);
-            ratioCombobox.AddItem(3L, "3x", null, null);
-            ratioCombobox.AddItem(4L, "4x", null, null);
-            ratioCombobox.AddItem(5L, "5x", null, null);
-            ratioCombobox.AddItem(8L, "8x", null, null);
-            ratioCombobox.AddItem(10L, "10x", null, null);
-            ratioCombobox.AddItem(15L, "15x", null, null);
-            ratioCombobox.AddItem(30L, "30x", null, null);
-            ratioCombobox.SelectItemByKey(CameraLCD.Settings.Ratio);
+            ratioCombobox.AddItem(2, "2x");
+            ratioCombobox.AddItem(3, "3x");
+            ratioCombobox.AddItem(4, "4x");
+            ratioCombobox.AddItem(5, "5x");
+            ratioCombobox.AddItem(8, "8x");
+            ratioCombobox.AddItem(10, "10x");
+            ratioCombobox.AddItem(15, "15x");
+            ratioCombobox.AddItem(30, "30x");
+            ratioCombobox.SelectItemByKey(settings.Ratio);
             ratioCombobox.ItemSelected += OnModeComboSelect;
             Controls.Add(ratioCombobox);
+            AddCaption(ratioCombobox, "Render ratio");
+            pos.Y += ratioCombobox.Size.Y + space;
 
-            Controls.Add(new MyGuiControlLabel(new Vector2(-0.16f, y + 0.40f), null, "Head fix"));
-            MyGuiControlCheckbox headFixCheckbox = new MyGuiControlCheckbox(new Vector2(0f, y + 0.40f), toolTip: "Fix to render your own head in camera view")
-            {
-                IsChecked = CameraLCD.Settings.HeadFix,
-                Enabled = true,
-                Visible = true
-            };
-            headFixCheckbox.IsCheckedChanged += IsHeadfixCheckedChanged;
-            Controls.Add(headFixCheckbox);
-
-            Controls.Add(new MyGuiControlLabel(new Vector2(-0.16f, y + 0.45f), null, "Update LOD"));
-            MyGuiControlCheckbox lodCheckbox = new MyGuiControlCheckbox(new Vector2(0f, y + 0.45f), toolTip: "LOD update between frames")
-            {
-                IsChecked = CameraLCD.Settings.UpdateLOD,
-                Enabled = true,
-                Visible = true
-            };
-            lodCheckbox.IsCheckedChanged += IsLODCheckedChanged;
-            Controls.Add(lodCheckbox);
-
-            Controls.Add(new MyGuiControlLabel(new Vector2(-0.16f, y + 0.55f), null, "Render range"));
-            MyGuiControlSlider rangeSlider = new MyGuiControlSlider(new Vector2(0f, y + 0.55f), 0, 120, 0.18f, CameraLCD.Settings.Range, null, string.Empty, 0, 0.8f, 0, "White", null, MyGuiControlSliderStyleEnum.Default, MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_CENTER, true)
-            {
-                Enabled = true,
-                Visible = true
-            };
+            MyGuiControlSlider rangeSlider = new MyGuiControlSlider(pos, 0, 120, 0.18f, settings.Range, originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP, intValue: true);
             rangeSlider.ValueChanged += RangeCheckedChanged;
             Controls.Add(rangeSlider);
+            AddCaption(rangeSlider, "Render range");
+            pos.Y += rangeSlider.Size.Y + space;
 
+            MyGuiControlCheckbox headFixCheckbox = new MyGuiControlCheckbox(pos, isChecked: settings.HeadFix, toolTip: "Fix to render your own head in camera view", originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP);
+            headFixCheckbox.IsCheckedChanged += IsHeadfixCheckedChanged;
+            Controls.Add(headFixCheckbox);
+            AddCaption(headFixCheckbox, "Head fix");
+            pos.Y += headFixCheckbox.Size.Y + space;
+
+            MyGuiControlCheckbox lodCheckbox = new MyGuiControlCheckbox(pos, isChecked: settings.UpdateLOD, toolTip: "LOD update between frames", originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP);
+            lodCheckbox.IsCheckedChanged += IsLODCheckedChanged;
+            Controls.Add(lodCheckbox);
+            AddCaption(lodCheckbox, "Update LOD");
+            pos.Y += lodCheckbox.Size.Y + space;
+
+            MyGuiControlCheckbox aspectCheckbox = new MyGuiControlCheckbox(pos, isChecked: settings.LockAspectRatio, toolTip: "Fix distortion by locking the aspect ratio", originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP);
+            aspectCheckbox.IsCheckedChanged += IsAspectCheckedChanged;
+            Controls.Add(aspectCheckbox);
+            AddCaption(aspectCheckbox, "Lock Aspect Ratio");
+            pos.Y += aspectCheckbox.Size.Y + space;
+
+            // Bottom
+            pos = new Vector2(0, (m_size.Value.Y / 2) - space);
+            MyGuiControlButton closeButton = new MyGuiControlButton(pos, text: MyTexts.Get(MyCommonTexts.Close), originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_BOTTOM, onButtonClick: OnCloseClicked);
+            Controls.Add(closeButton);
+        }
+
+        private void IsAspectCheckedChanged(MyGuiControlCheckbox cb)
+        {
+            CameraLCD.Settings.LockAspectRatio = cb.IsChecked;
+        }
+
+        private void OnCloseClicked(MyGuiControlButton btn)
+        {
+            CloseScreen();
+        }
+
+        protected override void OnClosed()
+        {
+            CameraLCD.Settings.Save();
+        }
+
+        private void AddCaption(MyGuiControlBase control, string caption)
+        {
+            Controls.Add(new MyGuiControlLabel(control.Position + new Vector2(-space, control.Size.Y / 2), text: caption, originAlign: MyGuiDrawAlignEnum.HORISONTAL_RIGHT_AND_VERTICAL_CENTER));
         }
 
         private void OnModeComboSelect()
@@ -139,16 +144,6 @@ namespace avaness.CameraLCD.Gui
         void RangeCheckedChanged(MyGuiControlSlider cb)
         {
             CameraLCD.Settings.Range = (int)cb.Value;
-        }
-
-        private void OnCloseButtonClick(object sender)
-        {
-            CloseScreen();
-        }
-
-        private void OnOkButtonClick(object sender)
-        {
-            CloseScreen();
         }
 
     }

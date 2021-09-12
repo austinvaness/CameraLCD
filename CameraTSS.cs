@@ -168,24 +168,33 @@ namespace avaness.CameraLCD
         private BorrowedRtvTexture DrawGame()
         {
             Vector2I sourceResolution = MyRender11.ResolutionI;
-            float sourceRatio = (float)sourceResolution.X / sourceResolution.Y;
-            // Ex 1920/1080 = 1.7777777
-
             Vector2I targetResolution = (Vector2I)panelComponent.TextureSize;
             MyRender11.ResolutionI = targetResolution;
-            Vector2 targetReal = panelComponent.SurfaceSize;
-            float targetRatio = targetReal.X / targetReal.Y;
-            // Ex 512/512 = 1
-
-            if(targetRatio < sourceRatio)
+            if (CameraLCD.Settings.LockAspectRatio)
             {
-                int newHeight = (int)((targetResolution.Y / sourceRatio) * targetRatio);
-                int barHeight = (targetResolution.Y - newHeight) / 2;
-                bufferOffset = barHeight * targetResolution.X * 4;
-                if (bufferOffset < 0)
-                    bufferOffset = 0;
+                Vector2 targetReal = panelComponent.SurfaceSize;
+                float targetRatio = targetReal.X / targetReal.Y;
+                // Ex 512/512 = 1
+
+                float sourceRatio = (float)sourceResolution.X / sourceResolution.Y;
+                // Ex 1920/1080 = 1.7777777
+
+                if (targetRatio < sourceRatio)
+                {
+                    int newHeight = (int)((targetResolution.Y / sourceRatio) * targetRatio);
+                    int barHeight = (targetResolution.Y - newHeight) / 2;
+                    if (bufferOffset == 0)
+                        buffer = new byte[0];
+                    bufferOffset = barHeight * targetResolution.X * 4;
+                    if (bufferOffset < 0)
+                        bufferOffset = 0; // Theoretically this is impossible
+                    else
+                        targetResolution.Y = newHeight;
+                }
                 else
-                    targetResolution.Y = newHeight;
+                {
+                    bufferOffset = 0;
+                }
             }
             else
             {

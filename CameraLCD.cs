@@ -11,11 +11,16 @@ namespace avaness.CameraLCD
 {
     public class CameraLCD : IPlugin
     {
-        public static CameraLCDSettings Settings = new CameraLCDSettings();
+        public static CameraLCDSettings Settings { get; private set; }
 
         private static readonly ConcurrentDictionary<DisplayId, CameraTSS> displays = new ConcurrentDictionary<DisplayId, CameraTSS>();
         private static int displayIndex = 0;
         private static int renderCount = 0;
+
+        public CameraLCD()
+        {
+            Settings = CameraLCDSettings.Load();
+        }
 
         public void Init(object gameInstance)
         {
