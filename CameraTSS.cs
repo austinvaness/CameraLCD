@@ -24,6 +24,8 @@ namespace avaness.CameraLCD
     [MyTextSurfaceScript("TSS_CameraDisplay", "Camera Display")]
     public class CameraTSS : MyTSSCommon
     {
+        private static readonly FieldInfo m_fov;
+
         public override ScriptUpdate NeedsUpdate => ScriptUpdate.Update100;
 
         private readonly MyTextPanelComponent panelComponent;
@@ -34,6 +36,11 @@ namespace avaness.CameraLCD
         private bool registered, functional;
         private byte[] buffer = new byte[0];
         private int bufferOffset = 0;
+
+        static CameraTSS()
+        {
+            m_fov = typeof(MyCameraBlock).GetField("m_fov", BindingFlags.NonPublic | BindingFlags.Instance);
+        }
 
         public CameraTSS(IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
@@ -91,8 +98,8 @@ namespace avaness.CameraLCD
             CameraLCD.RemoveDisplay(Id);
             registered = false;
             functional = false;
+            panelComponent.Reset();
         }
-
         private void TerminalBlock_CustomDataChanged(IMyTerminalBlock block)
         {
             string text = block.CustomData ?? "";
@@ -139,30 +146,47 @@ namespace avaness.CameraLCD
             if (renderCamera == null)
                 return;
 
-            if (renderCamera.GetDistanceFromPoint(camera.WorldMatrix.Translation) > CameraLCD.Settings.Range)
+            if (renderCamera.GetDistanceFromPoint(renderCamera.WorldMatrix.Translation) > CameraLCD.Settings.Range)
                 return;
 
+            // Set temporary settings
             bool initialLods = true;
             if (!CameraLCD.Settings.UpdateLOD)
                 initialLods = SetLoddingEnabled(false);
+            MyRenderSettings renderSettings = MyRender11.Settings;
+            MyRenderSettings oldRenderSettings = renderSettings;
+            renderSettings.User.GrassDensityFactor = 0;
+            renderSettings.User.GrassDrawDistance = 0;
+            MyRender11.Settings = renderSettings;
+            MyRenderDebugOverrides debugOverrides = MyRender11.DebugOverrides;
+            debugOverrides.Flares = false;
+            debugOverrides.Bloom = false;
+            debugOverrides.SSAO = false;
 
-            MatrixD viewMatrix = camera.GetViewMatrix();
+            // Set camera position
             float fov = GetCameraFov();
-            SetCameraViewMatrix(viewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, fov, fov, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, camera.WorldMatrix.Translation, smooth: false);
+            SetCameraViewMatrix(camera.GetViewMatrix(), renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, fov, fov, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, camera.WorldMatrix.Translation, smooth: false);
 
+            // Draw the game to the screen
             BorrowedRtvTexture texture = DrawGame();
             DrawOnScreen(screenName, texture);
             texture.Release();
 
+            // Restore camera position
             SetCameraViewMatrix(renderCamera.ViewMatrix, renderCamera.ProjectionMatrix, renderCamera.ProjectionMatrixFar, renderCamera.FieldOfView, renderCamera.FieldOfView, renderCamera.NearPlaneDistance, renderCamera.FarPlaneDistance, renderCamera.FarFarPlaneDistance, renderCamera.Position, lastMomentUpdateIndex: 0, smooth: false);
 
+            // Restore settings
             if (!CameraLCD.Settings.UpdateLOD)
                 SetLoddingEnabled(initialLods);
+            MyRender11.Settings = oldRenderSettings;
+            debugOverrides.Flares = true;
+            debugOverrides.Bloom = true;
+            debugOverrides.SSAO = true;
         }
 
         private float GetCameraFov()
         {
-            return (float)typeof(MyCameraBlock).GetField("m_fov", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(camera);
+            return (float)m_fov.GetValue(camera);
         }
 
         private BorrowedRtvTexture DrawGame()

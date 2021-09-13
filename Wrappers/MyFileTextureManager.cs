@@ -15,9 +15,9 @@ namespace avaness.CameraLCD.Wrappers
             m_generatedTextures = t.GetField("m_generatedTextures", BindingFlags.NonPublic | BindingFlags.Instance);
             tIUserGneratedTexture = AccessTools.TypeByName("VRage.Render11.Resources.IUserGeneratedTexture");
             resetGeneratedTexture = tIUserGneratedTexture.GetMethod("Reset", BindingFlags.Public | BindingFlags.Instance);
-            Type tITexture = AccessTools.TypeByName("VRage.Render11.Resources.ITexture");
+            //Type tITexture = AccessTools.TypeByName("VRage.Render11.Resources.ITexture");
             //Type tIResource = AccessTools.TypeByName("VRage.Render11.Resources.IResource");
-            textureSize = tITexture.GetProperty("Format", BindingFlags.Public | BindingFlags.Instance);
+            //textureSize = tITexture.GetProperty("Format", BindingFlags.Public | BindingFlags.Instance);
         }
 
         public MyFileTextureManager(object instance)
@@ -28,7 +28,7 @@ namespace avaness.CameraLCD.Wrappers
         private static readonly FieldInfo m_generatedTextures;
         private static readonly Type tIUserGneratedTexture;
         private static readonly MethodInfo resetGeneratedTexture;
-        private static readonly PropertyInfo textureSize;
+        //private static readonly PropertyInfo textureSize;
         public void ResetGeneratedTexture(string name, byte[] data)
         {
             IDictionary textures = (IDictionary)m_generatedTextures.GetValue(instance);
