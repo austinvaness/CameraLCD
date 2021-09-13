@@ -1,6 +1,5 @@
 ﻿using avaness.CameraLCD.Patch;
 using HarmonyLib;
-using Sandbox.ModAPI;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
@@ -39,9 +38,10 @@ namespace avaness.CameraLCD
             {
                 if (displayIndex >= displays.Count)
                     displayIndex = 0;
-                displays.Values.Skip(displayIndex).First()?.OnDrawScene();
+                CameraTSS display = displays.Values.Skip(displayIndex).First();
+                bool result = display != null && display.OnDrawScene();
                 displayIndex++;
-                return true;
+                return result;
             }
             return false;
         }

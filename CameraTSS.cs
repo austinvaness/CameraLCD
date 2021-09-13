@@ -161,17 +161,17 @@ namespace avaness.CameraLCD
         /// <summary>
         /// This is the only method where calls to render can be made directly.
         /// </summary>
-        public void OnDrawScene()
+        public bool OnDrawScene()
         {
             if (!TryGetTextureName(out string screenName) || camera == null || !functional)
-                return;
+                return false;
 
             MyCamera renderCamera = MySector.MainCamera;
             if (renderCamera == null)
-                return;
+                return false;
 
-            if (renderCamera.GetDistanceFromPoint(renderCamera.WorldMatrix.Translation) > CameraLCD.Settings.Range)
-                return;
+            if (renderCamera.GetDistanceFromPoint(camera.WorldMatrix.Translation) > CameraLCD.Settings.Range)
+                return false;
 
             // Set temporary settings
             bool initialLods = true;
@@ -206,6 +206,8 @@ namespace avaness.CameraLCD
             debugOverrides.Flares = true;
             debugOverrides.Bloom = true;
             debugOverrides.SSAO = true;
+
+            return true;
         }
 
         private float GetCameraFov()

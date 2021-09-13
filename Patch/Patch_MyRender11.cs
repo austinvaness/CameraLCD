@@ -12,7 +12,7 @@ namespace avaness.CameraLCD.Patch
 {
     public static class Patch_MyRender11
     {
-        private static MyCamera camera => MySector.MainCamera;
+        //private static MyCamera camera => MySector.MainCamera;
         //private static MyRenderMessageSetCameraViewMatrix cachedMessage;
 
         public static void Patch(Harmony harmony)
@@ -65,8 +65,8 @@ namespace avaness.CameraLCD.Patch
             return renderMessage;
         }
 
-        public static long renderCount = 0;
-        public static Stopwatch sw = new Stopwatch();
+        //public static long renderCount = 0;
+        //public static Stopwatch sw = new Stopwatch();
         public static bool Prefix_DrawScene()
         {
             return !CameraLCD.OnDrawScene();
