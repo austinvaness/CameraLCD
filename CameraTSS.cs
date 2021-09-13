@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using avaness.CameraLCD.Wrappers;
 using Sandbox.Game.Entities;
@@ -47,16 +48,16 @@ namespace avaness.CameraLCD
             panelComponent = (MyTextPanelComponent)surface;
             terminalBlock = (MyTerminalBlock)block;
             terminalBlock.OnMarkForClose += BlockMarkedForClose;
-            terminalBlock.CustomDataChanged += TerminalBlock_CustomDataChanged;
+            terminalBlock.CustomDataChanged += CustomDataChanged;
             terminalBlock.IsWorkingChanged += IsWorkingChanged;
-            TerminalBlock_CustomDataChanged(terminalBlock);
+            CustomDataChanged(terminalBlock);
         }
 
         public override void Dispose()
         {
             base.Dispose(); // do not remove
             terminalBlock.OnMarkForClose -= BlockMarkedForClose;
-            terminalBlock.CustomDataChanged -= TerminalBlock_CustomDataChanged;
+            terminalBlock.CustomDataChanged -= CustomDataChanged;
             terminalBlock.IsWorkingChanged -= IsWorkingChanged;
             Unregister();
         }
@@ -100,9 +101,16 @@ namespace avaness.CameraLCD
             functional = false;
             panelComponent.Reset();
         }
-        private void TerminalBlock_CustomDataChanged(IMyTerminalBlock block)
+
+        private void CustomDataChanged(IMyTerminalBlock block)
         {
-            string text = block.CustomData ?? "";
+            if (string.IsNullOrWhiteSpace(block.CustomData))
+            {
+                Unregister();
+                return;
+            }
+
+            string text = GetCameraName(block.CustomData);
             MyGridTerminalSystem terminal = (MyGridTerminalSystem)MyAPIGateway.TerminalActionsHelper.GetTerminalSystemForGrid(block.CubeGrid);
             if (terminal == null)
             {
@@ -122,6 +130,22 @@ namespace avaness.CameraLCD
             Unregister();
         }
 
+        private string GetCameraName(string customData)
+        {
+            string prefix = panelComponent.Area + ":";
+            using (StringReader reader = new StringReader(customData))
+            {
+                string line = reader.ReadLine();
+                while(line != null)
+                {
+                    if (line.StartsWith(prefix) && line.Length > prefix.Length)
+                        return line.Substring(prefix.Length);
+                    line = reader.ReadLine();
+                }
+            }
+            return customData;
+        }
+
         private void Camera_OnClose(VRage.Game.Entity.MyEntity e)
         {
             Unregister();
@@ -131,7 +155,7 @@ namespace avaness.CameraLCD
         {
             base.Run(); // do not remove
             if (!registered)
-                TerminalBlock_CustomDataChanged(terminalBlock);
+                CustomDataChanged(terminalBlock);
         }
 
         /// <summary>
