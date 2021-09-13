@@ -14,7 +14,6 @@ namespace avaness.CameraLCD.Wrappers
         static MyRender11()
         {
             Type t = AccessTools.TypeByName("VRageRender.MyRender11");
-            m_debugOverrides = t.GetField("m_debugOverrides", BindingFlags.NonPublic | BindingFlags.Static);
             m_rc = t.GetField("m_rc", BindingFlags.NonPublic | BindingFlags.Static);
             settings = t.GetField("Settings", BindingFlags.NonPublic | BindingFlags.Static);
             postprocess = t.GetField("Postprocess", BindingFlags.NonPublic | BindingFlags.Static);
@@ -27,11 +26,12 @@ namespace avaness.CameraLCD.Wrappers
 
             get_deviceInstance = ReflectionHelper.CreateStaticPropDelegate<Device1>(t, "DeviceInstance");
             get_resolutionI = ReflectionHelper.CreateStaticPropDelegate<Vector2I>(t, "ResolutionI");
+            get_debugOverrides = ReflectionHelper.CreateStaticPropDelegate<MyRenderDebugOverrides>(t, "DebugOverrides");
 
         }
 
-        private static readonly FieldInfo m_debugOverrides;
-        public static MyRenderDebugOverrides DebugOverrides => (MyRenderDebugOverrides)m_debugOverrides.GetValue(null);
+        private static readonly Func<MyRenderDebugOverrides> get_debugOverrides;
+        public static MyRenderDebugOverrides DebugOverrides => get_debugOverrides();
 
 
         private static readonly FieldInfo settings;
