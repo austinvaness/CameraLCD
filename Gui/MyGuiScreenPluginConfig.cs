@@ -15,6 +15,7 @@ namespace avaness.CameraLCD.Gui
         private const float space = 0.01f;
 
         private MyGuiControlCombobox ratioCombobox;
+        private MyGuiControlLabel rangeLabel;
 
         public MyGuiScreenPluginConfig() : base(new Vector2(0.5f, 0.5f), MyGuiConstants.SCREEN_BACKGROUND_COLOR, new Vector2(0.7264286f, 0.8633588f), false, null, MySandboxGame.Config.UIBkOpacity, MySandboxGame.Config.UIOpacity)
         {
@@ -71,10 +72,12 @@ namespace avaness.CameraLCD.Gui
             AddCaption(ratioCombobox, "Render ratio");
             pos.Y += ratioCombobox.Size.Y + space;
 
-            MyGuiControlSlider rangeSlider = new MyGuiControlSlider(pos, 0, 120, 0.18f, settings.Range, originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP, intValue: true);
-            rangeSlider.ValueChanged += RangeCheckedChanged;
+            MyGuiControlSlider rangeSlider = new MyGuiControlSlider(pos, 10, 120, 0.18f, settings.Range, originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP, intValue: true);
+            rangeSlider.ValueChanged += RangeValueChanged;
             Controls.Add(rangeSlider);
             AddCaption(rangeSlider, "Render range");
+            rangeLabel = new MyGuiControlLabel(rangeSlider.Position + new Vector2(rangeSlider.Size.X + space, rangeSlider.Size.Y / 2), text: rangeSlider.Value.ToString(), originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_CENTER);
+            Controls.Add(rangeLabel);
             pos.Y += rangeSlider.Size.Y + space;
 
             MyGuiControlCheckbox headFixCheckbox = new MyGuiControlCheckbox(pos, isChecked: settings.HeadFix, toolTip: "Fix to render your own head in camera view", originAlign: MyGuiDrawAlignEnum.HORISONTAL_LEFT_AND_VERTICAL_TOP);
@@ -141,9 +144,10 @@ namespace avaness.CameraLCD.Gui
             CameraLCD.Settings.UpdateLOD = cb.IsChecked;
         }
 
-        void RangeCheckedChanged(MyGuiControlSlider cb)
+        void RangeValueChanged(MyGuiControlSlider cb)
         {
             CameraLCD.Settings.Range = (int)cb.Value;
+            rangeLabel.Text = cb.Value.ToString();
         }
 
     }
