@@ -36,12 +36,41 @@ namespace avaness.CameraLCD
             renderCount++;
             if (IsRenderFrame() && HasNextDisplay())
             {
-                if (displayIndex >= displays.Count)
-                    displayIndex = 0;
-                CameraTSS display = displays.Values.Skip(displayIndex).First();
-                bool result = display != null && display.OnDrawScene();
-                displayIndex++;
-                return result;
+                // Try to draw displays at index -> end
+                int i = displayIndex;
+                if(i < displays.Count)
+                {
+                    foreach (var display in displays.Values.Skip(displayIndex))
+                    {
+                        i++;
+                        if (display != null && display.OnDrawScene())
+                        {
+                            displayIndex = i;
+                            return true;
+                        }
+                    }
+                }
+
+                // Try to draw displays at start -> index
+                i = 0;
+                foreach(var display in displays.Values)
+                {
+                    if (i == displayIndex)
+                    {
+                        displayIndex++;
+                        return false;
+                    }
+
+                    i++;
+                    if (display != null && display.OnDrawScene())
+                    {
+                        displayIndex = i;
+                        return true;
+                    }
+                }
+
+                // This point will only be reached if displayIndex is out of bounds and no displays could render
+                displayIndex = 0;
             }
             return false;
         }
