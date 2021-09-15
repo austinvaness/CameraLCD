@@ -29,6 +29,7 @@ namespace avaness.CameraLCD
 
         public override ScriptUpdate NeedsUpdate => ScriptUpdate.Update100;
 
+        private readonly MyTextPanel panel;
         private readonly MyTextPanelComponent panelComponent;
         private readonly MyTerminalBlock terminalBlock;
         private DisplayId Id => new DisplayId(terminalBlock.EntityId, panelComponent.Area);
@@ -45,6 +46,7 @@ namespace avaness.CameraLCD
 
         public CameraTSS(IMyTextSurface surface, IMyCubeBlock block, Vector2 size) : base(surface, block, size)
         {
+            panel = block as MyTextPanel;
             panelComponent = (MyTextPanelComponent)surface;
             terminalBlock = (MyTerminalBlock)block;
             terminalBlock.OnMarkForClose += BlockMarkedForClose;
@@ -165,6 +167,19 @@ namespace avaness.CameraLCD
         {
             if (!TryGetTextureName(out string screenName) || camera == null || !functional)
                 return false;
+
+            if (panel != null)
+            {
+                // Textures for panel rotation dont get unregistered
+                if (panel.PanelComponent != panelComponent)
+                    return false;
+
+                // Block 90 and 270 degree rotation
+                // TODO: Figure out why they crash on wide lcd panel
+                if (panelComponent.Area % 2 == 1)
+                    return false;
+            }
+
 
             MyCamera renderCamera = MySector.MainCamera;
             if (renderCamera == null)
