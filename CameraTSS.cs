@@ -185,7 +185,7 @@ namespace avaness.CameraLCD
             if (renderCamera == null)
                 return false;
 
-            if (renderCamera.GetDistanceFromPoint(camera.WorldMatrix.Translation) > CameraLCD.Settings.Range)
+            if (renderCamera.GetDistanceFromPoint(terminalBlock.WorldMatrix.Translation) > CameraLCD.Settings.Range)
                 return false;
 
             // Set temporary settings
