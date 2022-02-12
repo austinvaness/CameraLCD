@@ -1,10 +1,11 @@
-﻿using avaness.CameraLCD.Patch;
+﻿using avaness.CameraLCD.Gui;
+using avaness.CameraLCD.Patch;
 using HarmonyLib;
+using Sandbox.Graphics.GUI;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using VRage.Plugins;
-using VRage.Utils;
 
 namespace avaness.CameraLCD
 {
@@ -80,6 +81,11 @@ namespace avaness.CameraLCD
 
         public void Dispose()
         { }
+
+        public void OpenConfigDialog()
+        {
+            MyGuiSandbox.AddScreen(new MyGuiScreenPluginConfig());
+        }
 
         public static void AddDisplay(DisplayId id, CameraTSS browser)
         {
