@@ -290,7 +290,7 @@ namespace avaness.CameraLCD
 
                             MyRenderMessageUpdateModelProperties test = MyRenderProxy.MessagePool.Get<MyRenderMessageUpdateModelProperties>(MyRenderMessageEnum.UpdateModelProperties);
                             test.ID = id;
-                            test.MaterialName = materialName;
+                            test.MaterialName = MyStringId.GetOrCompute(materialName);
                             test.FlagsChange = new RenderFlagsChange()
                             {
                                 Add = RenderFlags.Visible,
