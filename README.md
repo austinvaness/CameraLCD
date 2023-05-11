@@ -6,4 +6,4 @@ This plugin is still a WIP.
 In order to use this plugin, you must install [Plugin Loader](https://github.com/austinvaness/PluginLoader). After installing Plugin Loader, simply find and enable Camera LCD in the plugin list from the game menu.
 
 ## Support
-For support, you may send me a message in my [discord server](https://discord.gg/mbzsbFK) or by sending me a direct message at avaness#6635. You may also use the GitHub issues page to report a problem.
+For support, create a new thread in the support channel of the Plugin Loader [discord server](https://discord.gg/6ETGRU3CzR). You may also use the GitHub issues page to report a problem.
