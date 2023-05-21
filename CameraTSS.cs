@@ -233,8 +233,9 @@ namespace avaness.CameraLCD
         private BorrowedRtvTexture DrawGame()
         {
             Vector2I sourceResolution = MyRender11.ResolutionI;
+            Vector2I sourceViewportResolution = MyRender11.ViewportResolution;
             Vector2I targetResolution = (Vector2I)panelComponent.TextureSize;
-            MyRender11.ResolutionI = targetResolution;
+
             if (CameraLCD.Settings.LockAspectRatio)
             {
                 Vector2 targetReal = panelComponent.SurfaceSize;
@@ -266,9 +267,13 @@ namespace avaness.CameraLCD
                 bufferOffset = 0;
             }
 
+            MyRender11.ResolutionI = targetResolution;
+
             BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", targetResolution.X, targetResolution.Y, Format.R8G8B8A8_UNorm_SRgb);
             DrawCharacterHead();
             MyRender11.DrawGameScene(texture, out _);
+
+            MyRender11.ViewportResolution = sourceViewportResolution;
             MyRender11.ResolutionI = sourceResolution;
             return texture;
         }

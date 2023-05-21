@@ -28,6 +28,8 @@ namespace avaness.CameraLCD.Wrappers
             get_resolutionI = ReflectionHelper.CreateStaticPropDelegate<Vector2I>(t, "ResolutionI");
             get_debugOverrides = ReflectionHelper.CreateStaticPropDelegate<MyRenderDebugOverrides>(t, "DebugOverrides");
 
+            ReflectionHelper.CreateStaticPropDelegate(t, "ViewportResolution", out get_viewportResolution, out set_viewportResolution);
+
         }
 
         private static readonly Func<MyRenderDebugOverrides> get_debugOverrides;
@@ -112,6 +114,20 @@ namespace avaness.CameraLCD.Wrappers
             set
             {
                 m_resolution.SetValue(null, value);
+            }
+        }
+
+        private static readonly Func<Vector2I> get_viewportResolution;
+        private static readonly Action<Vector2I> set_viewportResolution;
+        public static Vector2I ViewportResolution
+        {
+            get
+            {
+                return get_viewportResolution();
+            }
+            set
+            {
+                set_viewportResolution(value);
             }
         }
 
