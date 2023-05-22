@@ -4,5 +4,9 @@
   <FriendlyName>Camera LCD</FriendlyName>
   <Author>avaness</Author>
   <Tooltip>An experimental plugin that allows a camera to be displayed on an LCD screen.</Tooltip>
-  <Commit>da2ec6fc7dcd3c447c400ee92cec14adbe765e3b</Commit>
+  <Description>An experimental plugin that allows a camera to be displayed on an LCD screen.
+Known Issues:
+- Doesnt work on screens rotated 90 or 270 degrees
+- All screens except for the transparent lcd render the camera without any brightness</Description>
+  <Commit>debe6628ba6bb1772f27d5d64e7b688205b6e1f0</Commit>
 </PluginData>
