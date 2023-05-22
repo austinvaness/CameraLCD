@@ -268,6 +268,7 @@ namespace avaness.CameraLCD
             }
 
             MyRender11.ResolutionI = targetResolution;
+            MyRender11.ViewportResolution = targetResolution;
 
             BorrowedRtvTexture texture = MyManagers.RwTexturesPool.BorrowRtv("CameraLCDRevivedRenderer", targetResolution.X, targetResolution.Y, Format.R8G8B8A8_UNorm_SRgb);
             DrawCharacterHead();
